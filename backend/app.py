@@ -16,8 +16,8 @@ ADMIN_PASSWORD = "admin123"
 # 📧 EMAIL SETTINGS (UPDATED)
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SENDER_EMAIL = "ananypvt@gmail.com"
-SENDER_PASSWORD = "ahwodhkibllbpypr" # Spaces removed for connection stability
+SENDER_EMAIL = "pvtanany@gmail.com"
+SENDER_PASSWORD = "ahwodhkibllbpypr" 
 
 # --- HELPER: SEND EMAIL ---
 def send_confirmation_email(to_email, booking_data, token):
