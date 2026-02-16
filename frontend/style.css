@@ -1,16 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-/* --- 1. Define the classy color palette --- */
 :root {
-    --nirma-red: #D32F2F; /* The Official Red */
+    --nirma-red: #D32F2F;
     --primary-dark: #1e2a4a; 
-    --primary-accent: #3d5afe; 
     --secondary-text: #64748b;
-    --bg-color: #f8f9fa; /* Clean white/grey */
+    --bg-color: #f4f6f8;
     --card-bg: #ffffff;
-    --success: #00c853; 
-    --error: #e53935; 
-    --shadow-soft: 0 10px 30px -10px rgba(0,0,0,0.1); 
 }
 
 body {
@@ -19,62 +14,68 @@ body {
     margin: 0;
     min-height: 100vh;
     color: var(--primary-dark);
+    overflow-x: hidden; /* Prevents side scrolling */
 }
 
-/* --- 🔴 NEW HEADER STYLES --- */
+/* --- 🔴 HEADER STYLES (Fixed) --- */
 .nirma-header {
     background-color: var(--nirma-red);
     color: white;
-    padding: 15px 40px;
+    padding: 10px 20px;
     display: flex;
-    justify-content: space-between; /* Space between logo and login button */
+    justify-content: space-between;
     align-items: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 1000;
+    height: 70px; /* Fixed height to prevent growing */
 }
 
 .header-content {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
 }
 
 .header-logo {
-    height: 60px;
+    height: 50px;
     background: white;
-    padding: 5px;
+    padding: 2px;
     border-radius: 4px;
 }
 
+.header-titles {
+    display: flex;
+    flex-direction: column;
+}
+
 .header-titles h1 {
-    font-size: 20px;
+    font-size: 18px;
     margin: 0;
     text-transform: uppercase;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    color: white;
+    line-height: 1.2;
 }
 
 .header-titles h2 {
-    font-size: 14px;
+    font-size: 12px;
     margin: 0;
     font-weight: 400;
     opacity: 0.9;
-    color: #ffd7d7;
 }
 
+/* Login Button - Desktop */
 .header-login-btn {
+    background: rgba(255,255,255,0.2);
     color: white;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
-    border: 1px solid rgba(255,255,255,0.4);
-    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.5);
+    padding: 8px 15px;
     border-radius: 20px;
     transition: 0.3s;
-    background: rgba(0,0,0,0.1);
+    white-space: nowrap; /* Prevents text breaking */
 }
 
 .header-login-btn:hover {
@@ -82,13 +83,13 @@ body {
     color: var(--nirma-red);
 }
 
-/* --- 🖼️ SLIDESHOW STYLES --- */
+/* --- 🖼️ SLIDESHOW (Fixed Height) --- */
 .slideshow-container {
     width: 100%;
-    height: 400px; /* Fixed height for the hero area */
+    height: 350px; /* Fixed height for consistency */
     position: relative;
     overflow: hidden;
-    background: #000;
+    background: #1e2a4a; /* Blue fallback if image fails */
 }
 
 .mySlides {
@@ -100,19 +101,8 @@ body {
 .mySlides img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensures image covers area without stretching */
-    opacity: 0.8; /* Slight dim for overlay effect if needed */
-}
-
-/* Fade animation */
-.fade {
-    animation-name: fade;
-    animation-duration: 2.5s;
-}
-
-@keyframes fade {
-    from {opacity: 0.4} 
-    to {opacity: 1}
+    object-fit: cover; /* This stops the image from stretching */
+    opacity: 0.7; 
 }
 
 /* --- MAIN FORM AREA --- */
@@ -122,158 +112,187 @@ body {
     flex-direction: column;
     align-items: center;
     position: relative;
-    margin-top: -50px; /* Pulls the form UP slightly over the image */
+    margin-top: -60px; /* Overlap effect */
     z-index: 10;
+    padding-bottom: 40px;
 }
 
 .container {
     max-width: 600px; 
-    width: 90%;
-    padding: 20px;
+    width: 95%; /* Better width on mobile */
+    padding: 0 15px;
     box-sizing: border-box;
 }
 
 .form-intro {
     text-align: center;
     margin-bottom: 20px;
-    color: white; /* Text is white because it overlaps the image initially */
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
 }
-.form-intro h3 { margin: 0; font-size: 24px;}
+.form-intro h3 { margin: 0; font-size: 22px; }
+.form-intro p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
 
-/* --- CARD & FORM STYLES (Kept consistent) --- */
+/* --- CARD STYLES --- */
 .card {
     background: var(--card-bg);
-    padding: 30px;
+    padding: 25px; /* Slightly reduced padding */
     border-radius: 12px;
-    box-shadow: var(--shadow-soft);
-    margin-bottom: 25px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
     border: 1px solid #eee;
 }
 
 h3 {
     margin-top: 0;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     color: var(--primary-dark);
 }
-h3 i { color: var(--nirma-red); opacity: 0.8;} /* Changed icon color to red */
+h3 i { color: var(--nirma-red); }
 
-/* --- Inputs --- */
+/* --- INPUTS (Fixed Stacking) --- */
 .input-group {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
+
 .input-icon {
     position: absolute;
-    left: 18px;
+    left: 15px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--secondary-text);
     z-index: 2;
+    font-size: 16px;
 }
+
+/* Ensure inputs don't collapse */
 input, select {
     width: 100%;
-    padding: 16px 16px 16px 50px;
-    border: 2px solid #e2e8f0;
+    height: 50px; /* Fixed height ensures no squashing */
+    padding: 0 15px 0 45px; /* Comfortable padding */
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     background: #f8fafc;
     color: var(--primary-dark);
 }
+
+select {
+    appearance: none; /* Removes default ugly arrow */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 15px;
+}
+
 input:focus, select:focus {
     border-color: var(--nirma-red);
     background: #fff;
     outline: none;
 }
 
-/* --- Slot & Room Grids --- */
-.card-header-flex {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
+/* --- GRIDS --- */
 .slot-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-}
-.slot-btn {
-    padding: 15px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    cursor: pointer;
-    background: white;
-    font-weight: 600;
-}
-.slot-btn.free:hover { border-color: var(--nirma-red); }
-.slot-btn.selected {
-    background-color: var(--nirma-red);
-    color: white;
-    border-color: var(--nirma-red);
-}
-.slot-btn.booked {
-    background-color: #f1f5f9;
-    color: #94a3b8;
-    cursor: not-allowed;
-    text-decoration: line-through;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
 .room-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
 }
-.room-btn {
+
+/* Buttons */
+.slot-btn, .room-btn {
     padding: 12px;
-    border-radius: 8px;
-    border: 2px solid #e2e8f0;
-    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
     cursor: pointer;
-    font-weight: 600;
+    background: white;
+    font-size: 13px;
+    text-align: center;
 }
-.room-btn.selected {
-    background: var(--nirma-red);
+.slot-btn.selected, .room-btn.selected {
+    background-color: var(--nirma-red);
     color: white;
     border-color: var(--nirma-red);
 }
+.slot-btn.booked, .room-btn.room-booked {
+    background: #f1f5f9;
+    color: #ccc;
+    cursor: not-allowed;
+}
 
-/* --- Main Button --- */
 .main-btn {
     width: 100%;
-    padding: 20px;
-    background: linear-gradient(135deg, var(--nirma-red), #b71c1c);
+    padding: 18px;
+    background: var(--nirma-red);
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s;
-    box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
-}
-.main-btn:hover { transform: translateY(-2px); }
-
-/* --- Member Block --- */
-.member-input-block {
-    margin-bottom: 20px;
-    border-bottom: 1px dashed #e2e8f0;
-    padding-bottom: 15px;
 }
 
-/* --- Responsive for Mobile --- */
+/* --- 📱 MOBILE SPECIFIC FIXES --- */
 @media (max-width: 600px) {
-    .nirma-header { flex-direction: column; text-align: center; gap: 15px; padding: 15px;}
-    .header-content { flex-direction: column; }
-    .header-titles h1 { font-size: 18px; }
-    .slideshow-container { height: 250px; } /* Smaller images on mobile */
-    .container { width: 100%; padding: 10px; }
+    /* Fix the Header Height */
+    .nirma-header {
+        padding: 10px 15px;
+        height: auto; /* Allow auto height but control contents */
+        flex-wrap: nowrap; /* Keep them in one line */
+    }
+
+    .header-logo {
+        height: 40px; /* Smaller logo */
+    }
+
+    .header-titles h1 {
+        font-size: 14px; /* Smaller text */
+    }
+    .header-titles h2 {
+        display: none; /* Hide subtitle on tiny screens to save space */
+    }
+
+    /* Compact Login Button (Icon Only on Mobile) */
+    .header-login-btn {
+        padding: 8px;
+        border-radius: 50%; /* Make it a circle */
+        width: 35px;
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: none;
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .header-login-btn span {
+        display: none; /* Hide the word "Librarian Login" */
+    }
+    
+    .header-login-btn i {
+        font-size: 14px;
+        margin: 0;
+    }
+
+    /* Fix Slideshow Height */
+    .slideshow-container {
+        height: 220px; /* Smaller height for phone */
+    }
+    
+    .main-wrapper {
+        margin-top: -40px;
+    }
 }

@@ -4,38 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discussion Room Booking | NIMA Knowledge Centre</title>
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <header class="nirma-header">
     <div class="header-content">
         <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Nirma_University_Logo.png" alt="Nirma Logo" class="header-logo">
-        
         <div class="header-titles">
             <h1>NIMA KNOWLEDGE CENTRE</h1>
-            <h2>Discussion Room Booking Platform</h2>
+            <h2>Room Booking Portal</h2>
         </div>
     </div>
     
-    <a href="admin.html" class="header-login-btn">
-        <i class="fa-solid fa-user-lock"></i> Librarian Login
+    <a href="admin.html" class="header-login-btn" title="Librarian Login">
+        <i class="fa-solid fa-user-lock"></i>
+        <span>Librarian Login</span>
     </a>
 </header>
 
 <div class="slideshow-container">
     <div class="mySlides fade">
-        <img src="https://nirmauni.ac.in/wp-content/uploads/2020/01/Library-Banner.jpg" style="width:100%">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Duke_Humfrey%27s_Library_Interior_6%2C_Bodleian_Library%2C_Oxford%2C_UK_-_Diliff.jpg" style="width:100%">
     </div>
     <div class="mySlides fade">
-        <img src="https://images.shiksha.com/mediadata/images/1563794354phpM6zB1i.jpeg" style="width:100%">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg/1280px-Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg" style="width:100%">
     </div>
     <div class="mySlides fade">
-        <img src="https://content.jdmagicbox.com/comp/ahmedabad/34/079p4000334/catalogue/nirma-university-s-g-highway-ahmedabad-universities-20b1d.jpg" style="width:100%">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Library_of_Congress_Great_Hall_-_Jan_2006.jpg/1280px-Library_of_Congress_Great_Hall_-_Jan_2006.jpg" style="width:100%">
     </div>
 </div>
 
@@ -44,7 +42,7 @@
 
         <div class="form-intro">
             <h3>Reserve Your Space</h3>
-            <p>Select your team details and preferred slot below.</p>
+            <p>Select your team details below.</p>
         </div>
 
         <div class="card">
@@ -74,12 +72,12 @@
         <div class="card">
             <h3><i class="fa-solid fa-users-rectangle"></i> Group Members</h3>
             <div id="groupMembersContainer">
-                <p class="subtitle">Select group size above to add member details</p>
+                <p style="color:#888; text-align:center; font-size:13px;">Select group size above to add member details</p>
             </div>
         </div>
 
         <div class="card">
-            <h3><i class="fa-solid fa-graduation-cap"></i> Academic & Contact Details</h3>
+            <h3><i class="fa-solid fa-graduation-cap"></i> Academic Details</h3>
             <div class="input-group">
                 <i class="fa-solid fa-envelope input-icon"></i>
                 <input type="email" id="email" placeholder="Email Address" required>
@@ -90,37 +88,35 @@
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-building-columns input-icon"></i>
-                <input type="text" id="institute" placeholder="Institute (e.g. Nirma University)" required>
+                <input type="text" id="institute" placeholder="Institute" required>
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-code-branch input-icon"></i>
-                <input type="text" id="department" placeholder="Department (e.g. CSE)" required>
+                <input type="text" id="department" placeholder="Department" required>
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-user-graduate input-icon"></i>
-                <input type="text" id="programme" placeholder="Programme (e.g. BTech CSE)" required>
+                <input type="text" id="programme" placeholder="Programme" required>
             </div>
         </div>
 
         <div class="card">
-            <h3><i class="fa-solid fa-calendar-day"></i> Select Date & Time</h3>
+            <h3><i class="fa-solid fa-calendar-day"></i> Select Slot</h3>
             <div class="input-group">
                 <i class="fa-solid fa-calendar-days input-icon"></i>
                 <input type="date" id="bookingDate" required>
             </div>
 
-            <div class="card-header-flex" style="margin-top: 20px;">
-                <h4><i class="fa-regular fa-clock"></i> Available Slots</h4>
-                <div class="status-legend">
-                    <span><i class="fa-solid fa-circle dot-free"></i> Available</span>
-                    <span><i class="fa-solid fa-circle dot-booked"></i> Booked</span>
+            <div style="display:flex; justify-content:space-between; margin:15px 0 10px;">
+                <h4 style="margin:0; font-size:14px;">Available Time</h4>
+                <div style="font-size:12px; color:#666;">
+                    <i class="fa-solid fa-circle" style="color:white; border:1px solid #ccc;"></i> Free
+                    <i class="fa-solid fa-circle" style="color:#eee;"></i> Booked
                 </div>
             </div>
             <div class="slot-grid" id="slotGrid"></div>
 
-            <div class="card-header-flex" style="margin-top: 20px;">
-                <h4><i class="fa-solid fa-door-open"></i> Available Rooms</h4>
-            </div>
+            <h4 style="margin:20px 0 10px; font-size:14px;">Available Room</h4>
             <div class="room-grid" id="roomGrid"></div>
 
             <div class="input-group" style="margin-top: 20px;">
@@ -129,18 +125,17 @@
                     <option value="" disabled selected>Select Purpose</option>
                     <option>Group Study</option>
                     <option>Project Discussion</option>
-                    <option>Presentation Practice</option>
                     <option>Other</option>
                 </select>
             </div>
         </div>
 
         <button id="confirmBtn" class="main-btn" onclick="bookRoom()">
-            Confirm Reservation <i class="fa-solid fa-arrow-right"></i>
+            Confirm Reservation
         </button>
         
         <div style="text-align: center; margin-top: 25px; margin-bottom: 40px;">
-            <a href="manage.html" style="color: #64748b; font-size: 14px; text-decoration: underline;">
+            <a href="manage.html" style="color: #64748b; font-size: 13px; text-decoration: underline;">
                 Manage / Cancel My Bookings
             </a>
         </div>
@@ -153,17 +148,14 @@
 <script>
     let slideIndex = 0;
     showSlides();
-
     function showSlides() {
         let i;
         let slides = document.getElementsByClassName("mySlides");
-        for (i = 0; i < slides.length; i++) {
-            slides[i].style.display = "none";  
-        }
+        for (i = 0; i < slides.length; i++) { slides[i].style.display = "none"; }
         slideIndex++;
         if (slideIndex > slides.length) {slideIndex = 1}    
         slides[slideIndex-1].style.display = "block";  
-        setTimeout(showSlides, 4000); // Change image every 4 seconds
+        setTimeout(showSlides, 4000); 
     }
 </script>
 
