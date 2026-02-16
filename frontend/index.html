@@ -3,157 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discussion Deck | Library Booking</title>
+    <title>Discussion Room Booking | NIMA Knowledge Centre</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Style for the new Admin Button */
-        .admin-corner-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            text-decoration: none;
-            color: #c0392b; /* Red color to signify Admin */
-            border: 1px solid #c0392b;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            transition: 0.2s;
-            background: white;
-        }
-        .admin-corner-btn:hover {
-            background: #c0392b;
-            color: white;
-        }
-    </style>
 </head>
 
 <body>
-<div class="main-wrapper" style="position: relative;"> <div class="container">
 
-    <a href="admin.html" class="admin-corner-btn">
-        <i class="fa-solid fa-user-shield"></i> Librarian Login
-    </a>
-
-    <div class="header-section">
-        <h1><i class="fa-solid fa-book-open-reader"></i> Discussion Deck</h1>
-        <p class="subtitle">Reserve your collaborative space</p>
+<header class="nirma-header">
+    <div class="header-content">
+        <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Nirma_University_Logo.png" alt="Nirma Logo" class="header-logo">
+        
+        <div class="header-titles">
+            <h1>NIMA KNOWLEDGE CENTRE</h1>
+            <h2>Discussion Room Booking Platform</h2>
+        </div>
     </div>
+    
+    <a href="admin.html" class="header-login-btn">
+        <i class="fa-solid fa-user-lock"></i> Librarian Login
+    </a>
+</header>
 
-    <div class="card">
-        <h3><i class="fa-solid fa-users"></i> Group Details</h3>
+<div class="slideshow-container">
+    <div class="mySlides fade">
+        <img src="https://nirmauni.ac.in/wp-content/uploads/2020/01/Library-Banner.jpg" style="width:100%">
+    </div>
+    <div class="mySlides fade">
+        <img src="https://images.shiksha.com/mediadata/images/1563794354phpM6zB1i.jpeg" style="width:100%">
+    </div>
+    <div class="mySlides fade">
+        <img src="https://content.jdmagicbox.com/comp/ahmedabad/34/079p4000334/catalogue/nirma-university-s-g-highway-ahmedabad-universities-20b1d.jpg" style="width:100%">
+    </div>
+</div>
 
-        <form id="bookingForm">
+<div class="main-wrapper">
+    <div class="container">
+
+        <div class="form-intro">
+            <h3>Reserve Your Space</h3>
+            <p>Select your team details and preferred slot below.</p>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-users"></i> Group Details</h3>
+            <form id="bookingForm">
+                <div class="input-group">
+                    <i class="fa-solid fa-user-tie input-icon"></i>
+                    <input type="text" id="leaderName" placeholder="Leader Name" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-id-card input-icon"></i>
+                    <input type="text" id="rollNo" placeholder="Roll No (e.g. 21BCE001)" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-people-group input-icon"></i>
+                    <select id="groupSize" required>
+                        <option value="" disabled selected>Select Group Size</option>
+                        <option value="3">3 Students</option>
+                        <option value="4">4 Students</option>
+                        <option value="5">5 Students</option>
+                        <option value="6">6 Students</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-users-rectangle"></i> Group Members</h3>
+            <div id="groupMembersContainer">
+                <p class="subtitle">Select group size above to add member details</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-graduation-cap"></i> Academic & Contact Details</h3>
             <div class="input-group">
-                <i class="fa-solid fa-user-tie input-icon"></i>
-                <input type="text" id="leaderName" placeholder="Leader Name" required>
+                <i class="fa-solid fa-envelope input-icon"></i>
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-phone input-icon"></i>
+                <input type="tel" id="contactNo" placeholder="Contact Number" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-building-columns input-icon"></i>
+                <input type="text" id="institute" placeholder="Institute (e.g. Nirma University)" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-code-branch input-icon"></i>
+                <input type="text" id="department" placeholder="Department (e.g. CSE)" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-user-graduate input-icon"></i>
+                <input type="text" id="programme" placeholder="Programme (e.g. BTech CSE)" required>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-calendar-day"></i> Select Date & Time</h3>
+            <div class="input-group">
+                <i class="fa-solid fa-calendar-days input-icon"></i>
+                <input type="date" id="bookingDate" required>
             </div>
 
-            <div class="input-group">
-                <i class="fa-solid fa-id-card input-icon"></i>
-                <input type="text" id="rollNo" placeholder="Roll No (e.g. 21BCE001)" required>
+            <div class="card-header-flex" style="margin-top: 20px;">
+                <h4><i class="fa-regular fa-clock"></i> Available Slots</h4>
+                <div class="status-legend">
+                    <span><i class="fa-solid fa-circle dot-free"></i> Available</span>
+                    <span><i class="fa-solid fa-circle dot-booked"></i> Booked</span>
+                </div>
             </div>
+            <div class="slot-grid" id="slotGrid"></div>
 
-            <div class="input-group">
-                <i class="fa-solid fa-people-group input-icon"></i>
-                <select id="groupSize" required>
-                    <option value="" disabled selected>Select Group Size</option>
-                    <option value="3">3 Students</option>
-                    <option value="4">4 Students</option>
-                    <option value="5">5 Students</option>
-                    <option value="6">6 Students</option>
+            <div class="card-header-flex" style="margin-top: 20px;">
+                <h4><i class="fa-solid fa-door-open"></i> Available Rooms</h4>
+            </div>
+            <div class="room-grid" id="roomGrid"></div>
+
+            <div class="input-group" style="margin-top: 20px;">
+                <i class="fa-solid fa-bullseye input-icon"></i>
+                <select id="purpose" required>
+                    <option value="" disabled selected>Select Purpose</option>
+                    <option>Group Study</option>
+                    <option>Project Discussion</option>
+                    <option>Presentation Practice</option>
+                    <option>Other</option>
                 </select>
             </div>
-        </form>
-    </div>
-
-    <div class="card">
-        <h3><i class="fa-solid fa-users-rectangle"></i> Group Members</h3>
-        <div id="groupMembersContainer">
-            <p class="subtitle">Select group size to add member details</p>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3><i class="fa-solid fa-graduation-cap"></i> Academic & Contact Details</h3>
-
-        <div class="input-group">
-            <i class="fa-solid fa-envelope input-icon"></i>
-            <input type="email" id="email" placeholder="Email Address" required>
         </div>
 
-        <div class="input-group">
-            <i class="fa-solid fa-phone input-icon"></i>
-            <input type="tel" id="contactNo" placeholder="Contact Number" required>
-        </div>
-
-        <div class="input-group">
-            <i class="fa-solid fa-building-columns input-icon"></i>
-            <input type="text" id="institute" placeholder="Institute (e.g. Nirma University)" required>
-        </div>
-
-        <div class="input-group">
-            <i class="fa-solid fa-code-branch input-icon"></i>
-            <input type="text" id="department" placeholder="Department (e.g. CSE)" required>
-        </div>
-
-        <div class="input-group">
-            <i class="fa-solid fa-user-graduate input-icon"></i>
-            <input type="text" id="programme" placeholder="Programme (e.g. BTech CSE)" required>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3><i class="fa-solid fa-calendar-day"></i> Select Date & Time</h3>
+        <button id="confirmBtn" class="main-btn" onclick="bookRoom()">
+            Confirm Reservation <i class="fa-solid fa-arrow-right"></i>
+        </button>
         
-        <div class="input-group">
-            <i class="fa-solid fa-calendar-days input-icon"></i>
-            <input type="date" id="bookingDate" required>
+        <div style="text-align: center; margin-top: 25px; margin-bottom: 40px;">
+            <a href="manage.html" style="color: #64748b; font-size: 14px; text-decoration: underline;">
+                Manage / Cancel My Bookings
+            </a>
         </div>
 
-        <div class="card-header-flex" style="margin-top: 20px;">
-            <h4><i class="fa-regular fa-clock"></i> Available Slots</h4>
-            <div class="status-legend">
-                <span><i class="fa-solid fa-circle dot-free"></i> Available</span>
-                <span><i class="fa-solid fa-circle dot-booked"></i> Booked</span>
-            </div>
-        </div>
-        <div class="slot-grid" id="slotGrid"></div>
-
-        <div class="card-header-flex" style="margin-top: 20px;">
-            <h4><i class="fa-solid fa-door-open"></i> Available Rooms</h4>
-        </div>
-        <div class="room-grid" id="roomGrid"></div>
-
-        <div class="input-group" style="margin-top: 20px;">
-            <i class="fa-solid fa-bullseye input-icon"></i>
-            <select id="purpose" required>
-                <option value="" disabled selected>Select Purpose</option>
-                <option>Group Study</option>
-                <option>Project Discussion</option>
-                <option>Presentation Practice</option>
-                <option>Other</option>
-            </select>
-        </div>
     </div>
-
-    <button id="confirmBtn" class="main-btn" onclick="bookRoom()">
-        Confirm Reservation <i class="fa-solid fa-arrow-right"></i>
-    </button>
-    
-    <div style="text-align: center; margin-top: 15px;">
-        <a href="manage.html" style="color: #2c3e50; font-size: 14px; text-decoration: underline;">
-            Manage / Cancel My Bookings
-        </a>
-    </div>
-
-</div>
 </div>
 
 <script src="main.js"></script>
+
+<script>
+    let slideIndex = 0;
+    showSlides();
+
+    function showSlides() {
+        let i;
+        let slides = document.getElementsByClassName("mySlides");
+        for (i = 0; i < slides.length; i++) {
+            slides[i].style.display = "none";  
+        }
+        slideIndex++;
+        if (slideIndex > slides.length) {slideIndex = 1}    
+        slides[slideIndex-1].style.display = "block";  
+        setTimeout(showSlides, 4000); // Change image every 4 seconds
+    }
+</script>
+
 </body>
 </html>

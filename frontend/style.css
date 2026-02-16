@@ -2,124 +2,153 @@
 
 /* --- 1. Define the classy color palette --- */
 :root {
-    --primary-dark: #1e2a4a; /* Deep Navy Blue */
-    --primary-accent: #3d5afe; /* Vibrant Royal Blue for selections */
-    --secondary-text: #64748b; /* Muted grey for subtitles */
-    --bg-color: #f0f2f5; /* Very soft light grey background */
+    --nirma-red: #D32F2F; /* The Official Red */
+    --primary-dark: #1e2a4a; 
+    --primary-accent: #3d5afe; 
+    --secondary-text: #64748b;
+    --bg-color: #f8f9fa; /* Clean white/grey */
     --card-bg: #ffffff;
-    --success: #00c853; /* A classy emerald green */
-    --error: #e53935; /* A deep red */
-    --shadow-soft: 0 10px 30px -10px rgba(0,0,0,0.1); /* Soft, expensive-looking shadow */
+    --success: #00c853; 
+    --error: #e53935; 
+    --shadow-soft: 0 10px 30px -10px rgba(0,0,0,0.1); 
 }
 
 body {
-    font-family: 'Poppins', sans-serif; /* The new professional font */
+    font-family: 'Poppins', sans-serif;
     background-color: var(--bg-color);
     margin: 0;
     min-height: 100vh;
     color: var(--primary-dark);
 }
 
-/* Wrapper to center everything nicely */
+/* --- 🔴 NEW HEADER STYLES --- */
+.nirma-header {
+    background-color: var(--nirma-red);
+    color: white;
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between; /* Space between logo and login button */
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-logo {
+    height: 60px;
+    background: white;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.header-titles h1 {
+    font-size: 20px;
+    margin: 0;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+.header-titles h2 {
+    font-size: 14px;
+    margin: 0;
+    font-weight: 400;
+    opacity: 0.9;
+    color: #ffd7d7;
+}
+
+.header-login-btn {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: 0.3s;
+    background: rgba(0,0,0,0.1);
+}
+
+.header-login-btn:hover {
+    background: white;
+    color: var(--nirma-red);
+}
+
+/* --- 🖼️ SLIDESHOW STYLES --- */
+.slideshow-container {
+    width: 100%;
+    height: 400px; /* Fixed height for the hero area */
+    position: relative;
+    overflow: hidden;
+    background: #000;
+}
+
+.mySlides {
+    display: none;
+    height: 100%;
+    width: 100%;
+}
+
+.mySlides img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures image covers area without stretching */
+    opacity: 0.8; /* Slight dim for overlay effect if needed */
+}
+
+/* Fade animation */
+.fade {
+    animation-name: fade;
+    animation-duration: 2.5s;
+}
+
+@keyframes fade {
+    from {opacity: 0.4} 
+    to {opacity: 1}
+}
+
+/* --- MAIN FORM AREA --- */
 .main-wrapper {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
+    margin-top: -50px; /* Pulls the form UP slightly over the image */
+    z-index: 10;
 }
 
 .container {
-    max-width: 550px; /* Slightly wider for better breathing room */
-    width: 100%;
+    max-width: 600px; 
+    width: 90%;
     padding: 20px;
     box-sizing: border-box;
 }
 
-/* --- Hero Section Styles --- */
-.hero-section {
-    height: 60vh; /* Takes up 60% of screen height */
-    width: 100%;
-    /* Replace URL with your library photo path */
-    background: linear-gradient(rgba(30, 42, 74, 0.8), rgba(30, 42, 74, 0.6)), 
-                url('https://nirmauni.ac.in/wp-content/uploads/2020/01/Library-Banner.jpg');
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.form-intro {
     text-align: center;
-    color: white;
-    margin-bottom: -40px; /* Pulls the content up into the hero */
-    padding-bottom: 40px;
-    position: relative;
-    z-index: 0;
+    margin-bottom: 20px;
+    color: white; /* Text is white because it overlaps the image initially */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
+.form-intro h3 { margin: 0; font-size: 24px;}
 
-.hero-content .nirma-logo {
-    width: 100px;
-    margin-bottom: 15px;
-    filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
-}
-
-.hero-content h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin: 0 0 10px 0;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.hero-content p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    margin: 0;
-}
-
-.hero-scroll-hint {
-    margin-top: 30px;
-    animation: bounce 2s infinite;
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
-
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-    40% {transform: translateY(-10px);}
-    60% {transform: translateY(-5px);}
-}
-
-/* --- Header Styling (Below Hero) --- */
-.header-section {
-    text-align: center;
-    margin-bottom: 35px;
-    margin-top: 20px;
-}
-
-h1 {
-    font-weight: 700;
-    margin: 0;
-    font-size: 28px;
-    letter-spacing: -0.5px;
-}
-
-h1 i { color: var(--primary-accent); margin-right: 10px;}
-
-.subtitle {
-    color: var(--secondary-text);
-    margin-top: 8px;
-    font-weight: 500;
-}
-
-/* --- Card Styling --- */
+/* --- CARD & FORM STYLES (Kept consistent) --- */
 .card {
     background: var(--card-bg);
     padding: 30px;
-    border-radius: 20px;
+    border-radius: 12px;
     box-shadow: var(--shadow-soft);
     margin-bottom: 25px;
-    border: 1px solid rgba(255,255,255,0.5);
-    position: relative;
-    z-index: 1; /* Sits above the hero background */
+    border: 1px solid #eee;
 }
 
 h3 {
@@ -132,14 +161,13 @@ h3 {
     gap: 12px;
     color: var(--primary-dark);
 }
-h3 i { color: var(--primary-accent); opacity: 0.8;}
+h3 i { color: var(--nirma-red); opacity: 0.8;} /* Changed icon color to red */
 
-/* --- Fancy Input Fields --- */
+/* --- Inputs --- */
 .input-group {
     position: relative;
     margin-bottom: 20px;
 }
-
 .input-icon {
     position: absolute;
     left: 18px;
@@ -147,183 +175,105 @@ h3 i { color: var(--primary-accent); opacity: 0.8;}
     transform: translateY(-50%);
     color: var(--secondary-text);
     z-index: 2;
-    font-size: 16px;
 }
-
 input, select {
     width: 100%;
     padding: 16px 16px 16px 50px;
     border: 2px solid #e2e8f0;
-    border-radius: 14px;
+    border-radius: 8px;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
     font-size: 15px;
-    font-weight: 500;
-    transition: all 0.2s ease;
     background: #f8fafc;
     color: var(--primary-dark);
-    appearance: none;
 }
-
 input:focus, select:focus {
-    border-color: var(--primary-accent);
+    border-color: var(--nirma-red);
     background: #fff;
     outline: none;
-    box-shadow: 0 0 0 4px rgba(61, 90, 254, 0.1);
 }
 
-/* --- Slot Grid --- */
+/* --- Slot & Room Grids --- */
 .card-header-flex {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
-.card-header-flex h4 { margin: 0; font-size: 16px; font-weight: 600;}
-
-.status-legend { font-size: 12px; color: var(--secondary-text); display: flex; gap: 15px;}
-.dot-free { color: var(--primary-dark); opacity: 0.2;} /* Changed to grey for free */
-.dot-booked { color: #cbd5e1;} /* Muted grey for booked */
 
 .slot-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
 }
-
 .slot-btn {
     padding: 15px;
-    border: 2px solid transparent;
-    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
     cursor: pointer;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 15px;
     background: white;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    transition: all 0.2s;
-    color: var(--primary-dark);
+    font-weight: 600;
 }
-
-.slot-btn.free {
-    border-color: #e2e8f0;
-}
-
-.slot-btn.free:hover {
-    border-color: var(--primary-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(61, 90, 254, 0.1);
-}
-
+.slot-btn.free:hover { border-color: var(--nirma-red); }
 .slot-btn.selected {
-    background-color: var(--primary-accent);
+    background-color: var(--nirma-red);
     color: white;
-    border-color: var(--primary-accent);
-    box-shadow: 0 8px 20px rgba(61, 90, 254, 0.3);
-    transform: scale(1.02);
+    border-color: var(--nirma-red);
 }
-
 .slot-btn.booked {
     background-color: #f1f5f9;
     color: #94a3b8;
     cursor: not-allowed;
-    box-shadow: none;
     text-decoration: line-through;
 }
 
-/* --- Room Grid (UPDATED) --- */
 .room-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Adaptive columns */
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 10px;
 }
-
 .room-btn {
     padding: 12px;
-    border-radius: 12px;
+    border-radius: 8px;
     border: 2px solid #e2e8f0;
     background: white;
     cursor: pointer;
-    font-family: 'Poppins', sans-serif;
     font-weight: 600;
-    color: var(--primary-dark);
-    transition: all 0.2s;
 }
-
-.room-btn:hover:not(:disabled) {
-    border-color: var(--primary-accent);
-    color: var(--primary-accent);
-}
-
 .room-btn.selected {
-    background: var(--primary-accent);
+    background: var(--nirma-red);
     color: white;
-    border-color: var(--primary-accent);
-    box-shadow: 0 5px 15px rgba(61, 90, 254, 0.3);
-}
-
-.room-btn.room-booked {
-    background: #f1f5f9;
-    color: #cbd5e1;
-    border-color: transparent;
-    cursor: not-allowed;
-}
-
-/* --- Group Members Block --- */
-.member-input-block {
-    margin-bottom: 20px;
-    border-bottom: 1px dashed #e2e8f0;
-    padding-bottom: 15px;
-}
-.member-input-block:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+    border-color: var(--nirma-red);
 }
 
 /* --- Main Button --- */
 .main-btn {
     width: 100%;
     padding: 20px;
-    background: linear-gradient(135deg, var(--primary-accent), #2c3e50);
+    background: linear-gradient(135deg, var(--nirma-red), #b71c1c);
     color: white;
     border: none;
-    border-radius: 16px;
+    border-radius: 8px;
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 10px 25px rgba(61, 90, 254, 0.4);
-    margin-top: 10px;
+    transition: transform 0.2s;
+    box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
+}
+.main-btn:hover { transform: translateY(-2px); }
+
+/* --- Member Block --- */
+.member-input-block {
+    margin-bottom: 20px;
+    border-bottom: 1px dashed #e2e8f0;
+    padding-bottom: 15px;
 }
 
-.main-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(61, 90, 254, 0.5);
-}
-
-.main-btn:active {
-    transform: scale(0.98);
-}
-
-/* --- Admin Corner Button --- */
-.admin-corner-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    text-decoration: none;
-    color: white;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    padding: 8px 15px;
-    border-radius: 30px;
-    font-size: 13px;
-    font-weight: 500;
-    backdrop-filter: blur(5px);
-    transition: 0.3s;
-    z-index: 10;
-}
-
-.admin-corner-btn:hover {
-    background: white;
-    color: var(--primary-dark);
+/* --- Responsive for Mobile --- */
+@media (max-width: 600px) {
+    .nirma-header { flex-direction: column; text-align: center; gap: 15px; padding: 15px;}
+    .header-content { flex-direction: column; }
+    .header-titles h1 { font-size: 18px; }
+    .slideshow-container { height: 250px; } /* Smaller images on mobile */
+    .container { width: 100%; padding: 10px; }
 }
