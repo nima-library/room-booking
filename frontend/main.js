@@ -33,7 +33,13 @@ let selectedSlot = null;
 let selectedRoom = null;
 let currentBookings = []; // Stores data from server
 
-const ROOMS = ["Discussion Room 1", "Discussion Room 2", "Discussion Room 3", "Discussion Room 4"];
+// ✅ RESTORED ALL 13 ROOMS
+const ROOMS = [
+    "Discussion Room 1", "Discussion Room 2", "Discussion Room 3", "Discussion Room 4",
+    "Discussion Room 5", "Discussion Room 6", "Discussion Room 7", "Discussion Room 8",
+    "Discussion Room 9", "Discussion Room 10", "Discussion Room 11", "Discussion Room 12",
+    "Discussion Room 13"
+];
 
 // --- 3. GENERATE TIME SLOTS (09:00 AM - 05:00 PM) ---
 function generateSlots() {
@@ -63,7 +69,7 @@ async function fetchBookedSlots(dateStr) {
 
         // 🛑 CHECK IF LIBRARY IS CLOSED BY ADMIN
         if (data.status === "closed") {
-            alert(`⚠️ LIBRARY CLOSED ON THIS DATE\nReason: ${data.reason}`);
+            alert(`⛔ LIBRARY CLOSED: ${data.reason}`);
             
             // Disable everything
             document.querySelectorAll('.slot-btn').forEach(btn => {
@@ -111,7 +117,7 @@ function showAvailableRooms(slotTime) {
 
         const btn = document.createElement('button');
         btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
-        btn.innerText = room;
+        btn.innerText = room.replace("Discussion Room ", "Room "); // Shorten name for button
         btn.disabled = isBooked;
 
         if (!isBooked) {
@@ -119,7 +125,7 @@ function showAvailableRooms(slotTime) {
                 // Select Room
                 document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                selectedRoom = room;
+                selectedRoom = room; // Save full name
             };
         } else {
              btn.title = "Already Booked";
@@ -145,10 +151,10 @@ function updateSlotAvailability() {
         slotCounts[b.time_slot] = (slotCounts[b.time_slot] || 0) + 1;
     });
 
-    // If all 4 rooms are taken, mark slot as FULL
+    // If all 13 rooms are taken, mark slot as FULL
     document.querySelectorAll('.slot-btn').forEach(btn => {
         const time = btn.innerText;
-        if (slotCounts[time] >= 4) {
+        if (slotCounts[time] >= 13) { // Updated check for 13 rooms
             btn.className = 'slot-btn booked';
             btn.onclick = null; // Disable click
             btn.innerHTML = `${time}<br><small style="color:red;">FULL</small>`;
@@ -214,7 +220,7 @@ async function bookRoom() {
         time_slot: selectedSlot,
         leader_name: leaderName,
         leader_roll_no: rollNo,
-        email: email, // ✅ SENDING EMAIL TO BACKEND
+        email: email, 
         group_size: document.getElementById('groupSize').value,
         members: members,
         purpose: purpose
