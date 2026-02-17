@@ -33,12 +33,12 @@ let selectedSlot = null;
 let selectedRoom = null;
 let currentBookings = []; // Stores data from server
 
-// ✅ RESTORED ALL 13 ROOMS
+// ✅ THE 13 SPECIFIC ROOMS
 const ROOMS = [
-    "Discussion Room 1", "Discussion Room 2", "Discussion Room 3", "Discussion Room 4",
-    "Discussion Room 5", "Discussion Room 6", "Discussion Room 7", "Discussion Room 8",
-    "Discussion Room 9", "Discussion Room 10", "Discussion Room 11", "Discussion Room 12",
-    "Discussion Room 13"
+    "Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507",
+    "Room 601", "Room 602",
+    "Room 701", "Room 702",
+    "Room 801", "Room 802"
 ];
 
 // --- 3. GENERATE TIME SLOTS (09:00 AM - 05:00 PM) ---
@@ -117,7 +117,7 @@ function showAvailableRooms(slotTime) {
 
         const btn = document.createElement('button');
         btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
-        btn.innerText = room.replace("Discussion Room ", "Room "); // Shorten name for button
+        btn.innerText = room; // Shows "Room 501", etc.
         btn.disabled = isBooked;
 
         if (!isBooked) {
@@ -125,7 +125,7 @@ function showAvailableRooms(slotTime) {
                 // Select Room
                 document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                selectedRoom = room; // Save full name
+                selectedRoom = room; 
             };
         } else {
              btn.title = "Already Booked";
@@ -154,7 +154,7 @@ function updateSlotAvailability() {
     // If all 13 rooms are taken, mark slot as FULL
     document.querySelectorAll('.slot-btn').forEach(btn => {
         const time = btn.innerText;
-        if (slotCounts[time] >= 13) { // Updated check for 13 rooms
+        if (slotCounts[time] >= 13) { 
             btn.className = 'slot-btn booked';
             btn.onclick = null; // Disable click
             btn.innerHTML = `${time}<br><small style="color:red;">FULL</small>`;
