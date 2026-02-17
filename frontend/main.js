@@ -1,220 +1,253 @@
-let selectedSlot = null;
-let selectedRoom = null;
-let currentDayBookings = []; 
-
+// ✅ CHECK THIS URL (Must match your backend)
 const BACKEND_URL = "https://nima-backend.vercel.app"; 
 
-/* ---------------- DATE LOGIC ---------------- */
-const bookingDate = document.getElementById("bookingDate");
+// --- 1. INITIAL SETUP ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Set default date to today
+    const dateInput = document.getElementById('bookingDate');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today; 
+    dateInput.value = today;
 
-function getLocalDateString(date) {
-    const offset = date.getTimezoneOffset() * 60000;
-    const localDate = new Date(date.getTime() - offset);
-    return localDate.toISOString().split("T")[0];
-}
+    // Load slots for today immediately
+    generateSlots();
+    fetchBookedSlots(today);
 
-const today = new Date();
-const maxDate = new Date();
-maxDate.setDate(today.getDate() + 7);
-
-bookingDate.min = getLocalDateString(today);
-bookingDate.max = getLocalDateString(maxDate);
-bookingDate.value = bookingDate.min;
-bookingDate.addEventListener("change", generateTimeSlots);
-
-/* ---------------- TIME SLOT LOGIC ---------------- */
-const slotGrid = document.getElementById("slotGrid");
-
-async function generateTimeSlots() {
-    slotGrid.innerHTML = '<p style="color:#666; font-size:14px;">Loading slots...</p>';
-    selectedSlot = null;
-    selectedRoom = null;
-    document.getElementById("roomGrid").innerHTML = '<p class="subtitle">Select a time slot first</p>';
-
-    currentDayBookings = await fetchBookedSlots(bookingDate.value);
-    
-    slotGrid.innerHTML = ""; 
-
-    const now = new Date();
-    let startHour = 9; 
-
-    if (bookingDate.value === getLocalDateString(now)) {
-        if (now.getHours() >= 9) {
-            startHour = now.getHours() + 1;
-        }
-    }
-
-    if (startHour >= 18) {
-        slotGrid.innerHTML = '<p style="color: red; font-weight: 500;">Library is closed for today.</p>';
-        return;
-    }
-
-    for (let hour = startHour; hour < 18; hour++) {
-        const slot = `${hour}:00-${hour + 1}:00`;
-        const btn = document.createElement("button");
-        btn.innerText = slot;
-        btn.classList.add("slot-btn");
-        btn.classList.add("free"); 
-
-        // Check if ALL 13 rooms are booked
-        const bookingsForThisSlot = currentDayBookings.filter(b => b.time_slot === slot);
-        if (bookingsForThisSlot.length >= 13) {
-            btn.classList.remove("free");
-            btn.classList.add("booked");
-            btn.disabled = true;
-        } else {
-            btn.onclick = () => selectSlot(btn, slot);
-        }
-        slotGrid.appendChild(btn);
-    }
-}
-
-async function fetchBookedSlots(date) {
-    try {
-        const res = await fetch(`${BACKEND_URL}/get-bookings?date=${date}`);
-        const data = await res.json();
-        return data.bookings || []; 
-    } catch (err) {
-        console.error(err);
-        return [];
-    }
-}
-
-generateTimeSlots();
-
-/* ---------------- SLOT SELECTION ---------------- */
-function selectSlot(btn, time) {
-    document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    selectedSlot = time;
-    loadRooms(time);
-}
-
-/* ---------------- ROOM LOGIC (UPDATED FLOORS) ---------------- */
-const roomGrid = document.getElementById("roomGrid");
-
-function loadRooms(timeSlot) {
-    roomGrid.innerHTML = "";
-    selectedRoom = null;
-
-    // ✅ NEW ROOM LIST
-    const allRooms = [
-        // Floor 5
-        "501", "502", "503", "504", "505", "506", "507",
-        // Floor 6
-        "601", "602",
-        // Floor 7
-        "701", "702",
-        // Floor 8
-        "801", "802"
-    ];
-    
-    const takenRooms = currentDayBookings
-        .filter(booking => booking.time_slot === timeSlot)
-        .map(booking => booking.room_id);
-
-    allRooms.forEach(room => {
-        const btn = document.createElement("button");
-        btn.className = "room-btn";
-        btn.innerText = room;
-
-        // Visual separation for floors (Optional tweak)
-        if (room.endsWith("01")) {
-            btn.style.marginLeft = "5px"; 
-        }
-
-        if (takenRooms.includes(room)) {
-            btn.classList.add("room-booked"); 
-            btn.disabled = true;
-            btn.title = "Booked";
-        } else {
-            btn.onclick = () => selectRoom(btn, room);
-        }
+    // Listen for date changes
+    dateInput.addEventListener('change', (e) => {
+        // Reset selections when date changes
+        selectedSlot = null;
+        selectedRoom = null;
+        document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
         
+        // Fetch new data
+        fetchBookedSlots(e.target.value);
+    });
+
+    // Listen for group size changes (to show member fields)
+    document.getElementById('groupSize').addEventListener('change', updateMemberFields);
+});
+
+// --- 2. GLOBAL VARIABLES ---
+let selectedSlot = null;
+let selectedRoom = null;
+let currentBookings = []; // Stores data from server
+
+const ROOMS = ["Discussion Room 1", "Discussion Room 2", "Discussion Room 3", "Discussion Room 4"];
+
+// --- 3. GENERATE TIME SLOTS (09:00 AM - 05:00 PM) ---
+function generateSlots() {
+    const grid = document.getElementById('slotGrid');
+    grid.innerHTML = ""; // Clear existing
+
+    const times = [
+        "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM",
+        "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM",
+        "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM"
+    ];
+
+    times.forEach(time => {
+        const btn = document.createElement('div');
+        btn.className = 'slot-btn free';
+        btn.innerText = time;
+        btn.onclick = () => selectSlot(btn, time);
+        grid.appendChild(btn);
+    });
+}
+
+// --- 4. FETCH DATA FROM SERVER (Handles "Library Closed" too) ---
+async function fetchBookedSlots(dateStr) {
+    try {
+        const res = await fetch(`${BACKEND_URL}/get-bookings?date=${dateStr}`);
+        const data = await res.json();
+
+        // 🛑 CHECK IF LIBRARY IS CLOSED BY ADMIN
+        if (data.status === "closed") {
+            alert(`⚠️ LIBRARY CLOSED ON THIS DATE\nReason: ${data.reason}`);
+            
+            // Disable everything
+            document.querySelectorAll('.slot-btn').forEach(btn => {
+                btn.className = 'slot-btn booked'; // Turn grey
+                btn.innerHTML += '<br><small style="color:red; font-size:10px;">CLOSED</small>';
+                btn.onclick = null; // Remove click
+            });
+            document.getElementById('roomGrid').innerHTML = "<p style='color:red; text-align:center;'>Library Closed</p>";
+            return; // STOP HERE
+        }
+
+        // Proceed normally
+        currentBookings = data.bookings || [];
+        updateSlotAvailability();
+
+    } catch (err) {
+        console.error("Error connecting to server:", err);
+    }
+}
+
+// --- 5. LOGIC: CLICK A SLOT -> SHOW ROOMS ---
+function selectSlot(element, time) {
+    // 1. Visual selection
+    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    // 2. Save choice
+    selectedSlot = time;
+    selectedRoom = null; // Reset room when time changes
+
+    // 3. Filter Rooms
+    showAvailableRooms(time);
+}
+
+// --- 6. SHOW ROOMS BASED ON SELECTED SLOT ---
+function showAvailableRooms(slotTime) {
+    const roomGrid = document.getElementById('roomGrid');
+    roomGrid.innerHTML = ""; // Clear old rooms
+
+    ROOMS.forEach(room => {
+        // Check if this specific room is booked at this specific time
+        const isBooked = currentBookings.some(b => 
+            b.time_slot === slotTime && b.room_id === room
+        );
+
+        const btn = document.createElement('button');
+        btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
+        btn.innerText = room;
+        btn.disabled = isBooked;
+
+        if (!isBooked) {
+            btn.onclick = () => {
+                // Select Room
+                document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedRoom = room;
+            };
+        } else {
+             btn.title = "Already Booked";
+        }
+
         roomGrid.appendChild(btn);
     });
 }
 
-function selectRoom(btn, room) {
-    document.querySelectorAll(".room-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    selectedRoom = room;
-}
+// --- 7. HELPER: UPDATE SLOT COLORS ---
+function updateSlotAvailability() {
+    // Reset all slots to free first
+    document.querySelectorAll('.slot-btn').forEach(btn => {
+        btn.className = 'slot-btn free';
+        // Re-attach click listener
+        const time = btn.innerText;
+        btn.onclick = () => selectSlot(btn, time);
+    });
 
-/* ---------------- GROUP SIZE LOGIC ---------------- */
-const groupSizeSelect = document.getElementById("groupSize");
-const groupMembersContainer = document.getElementById("groupMembersContainer");
+    // Count how many rooms are booked for each slot
+    const slotCounts = {};
+    currentBookings.forEach(b => {
+        slotCounts[b.time_slot] = (slotCounts[b.time_slot] || 0) + 1;
+    });
 
-groupSizeSelect.addEventListener("change", () => {
-    groupMembersContainer.innerHTML = "";
-    const size = parseInt(groupSizeSelect.value);
-    if (!size || size < 1) return;
-
-    for (let i = 1; i <= size; i++) {
-        const div = document.createElement("div");
-        div.className = "member-input-block";
-        div.style.marginTop = "10px"; 
-        div.innerHTML = `
-            <h4 style="font-size:14px; margin-bottom:5px;">Member ${i}</h4>
-            <div class="input-group"><i class="fa-solid fa-user input-icon"></i><input type="text" class="member-name" placeholder="Name" required></div>
-            <div class="input-group"><i class="fa-solid fa-id-card input-icon"></i><input type="text" class="member-roll" placeholder="Roll No" required></div>
-        `;
-        groupMembersContainer.appendChild(div);
-    }
-});
-
-function getGroupMembers() {
-    const members = [];
-    const nameInputs = document.querySelectorAll('.member-name');
-    const rollInputs = document.querySelectorAll('.member-roll');
-    nameInputs.forEach((input, index) => {
-        if (input.value.trim()) {
-            members.push({ name: input.value.trim(), roll_no: rollInputs[index]?.value.trim() });
+    // If all 4 rooms are taken, mark slot as FULL
+    document.querySelectorAll('.slot-btn').forEach(btn => {
+        const time = btn.innerText;
+        if (slotCounts[time] >= 4) {
+            btn.className = 'slot-btn booked';
+            btn.onclick = null; // Disable click
+            btn.innerHTML = `${time}<br><small style="color:red;">FULL</small>`;
         }
     });
-    return members;
 }
 
-/* ---------------- FINAL SUBMIT ---------------- */
+// --- 8. GROUP MEMBERS INPUTS ---
+function updateMemberFields() {
+    const size = document.getElementById('groupSize').value;
+    const container = document.getElementById('groupMembersContainer');
+    container.innerHTML = ""; // Clear
+
+    for (let i = 1; i < size; i++) { // Start from 1 because Leader is 0
+        const div = document.createElement('div');
+        div.className = 'member-input-block';
+        div.innerHTML = `
+            <div class="input-group" style="margin-bottom:10px;">
+                <i class="fa-solid fa-user input-icon"></i>
+                <input type="text" placeholder="Member ${i + 1} Name" class="mem-name" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-id-badge input-icon"></i>
+                <input type="text" placeholder="Member ${i + 1} Roll No" class="mem-roll" required>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+}
+
+// --- 9. FINAL STEP: BOOK THE ROOM ---
 async function bookRoom() {
-  if (!selectedSlot || !selectedRoom) {
-    alert("Please select both a time slot and a room.");
-    return;
-  }
+    // 1. Validation
+    if (!selectedSlot || !selectedRoom) {
+        alert("⚠️ Please select a Time Slot and a Room.");
+        return;
+    }
 
-  const data = {
-    leader_name: document.getElementById("leaderName").value,
-    leader_roll_no: document.getElementById("rollNo").value,
-    email: document.getElementById("email").value,
-    contact: document.getElementById("contactNo").value,
-    group_members: getGroupMembers(),
-    institute: document.getElementById("institute").value,
-    department: document.getElementById("department").value,
-    program: document.getElementById("programme").value,
-    purpose: document.getElementById("purpose").value,
-    room_id: selectedRoom,
-    date: document.getElementById("bookingDate").value,
-    time_slot: selectedSlot
-  };
+    const leaderName = document.getElementById('leaderName').value;
+    const rollNo = document.getElementById('rollNo').value;
+    const email = document.getElementById('email').value; // ✅ CRITICAL FOR EMAIL
+    const dateStr = document.getElementById('bookingDate').value;
+    const purpose = document.getElementById('purpose').value;
 
-  try {
-    const res = await fetch(`${BACKEND_URL}/confirm-booking`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+    if (!leaderName || !rollNo || !email || !purpose) {
+        alert("⚠️ Please fill in all details (Name, Roll No, Email, Purpose).");
+        return;
+    }
+
+    // 2. Gather Member Data
+    const members = [];
+    document.querySelectorAll('.member-input-block').forEach(block => {
+        members.push({
+            name: block.querySelector('.mem-name').value,
+            roll: block.querySelector('.mem-roll').value
+        });
     });
 
-    const result = await res.json();
+    // 3. Prepare Payload
+    const bookingData = {
+        room_id: selectedRoom,
+        date: dateStr,
+        time_slot: selectedSlot,
+        leader_name: leaderName,
+        leader_roll_no: rollNo,
+        email: email, // ✅ SENDING EMAIL TO BACKEND
+        group_size: document.getElementById('groupSize').value,
+        members: members,
+        purpose: purpose
+    };
 
-    if (result.status === "success") {
-      // ✅ SAVE DATA FOR SUCCESS PAGE
-      localStorage.setItem("bookingReceipt", JSON.stringify(data));
-      window.location.href = "success.html";
-    } else {
-      alert("Error: " + result.message);
+    // 4. Send to Backend
+    const btn = document.getElementById('confirmBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/confirm-booking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingData)
+        });
+
+        const result = await res.json();
+
+        if (result.status === 'success') {
+            // Save receipt to local storage for the success page
+            localStorage.setItem("bookingReceipt", JSON.stringify(bookingData));
+            window.location.href = "success.html"; // Go to receipt
+        } else {
+            alert("❌ Error: " + result.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    } catch (err) {
+        console.error(err);
+        alert("❌ Failed to connect to server. Check internet.");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
-  } catch (err) {
-    console.error(err);
-    alert("Server error. Please try again.");
-  }
 }
