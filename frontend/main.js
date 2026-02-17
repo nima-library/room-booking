@@ -5,13 +5,15 @@ const BACKEND_URL = "https://nima-backend.vercel.app";
 document.addEventListener('DOMContentLoaded', () => {
     // Set default date to today
     const dateInput = document.getElementById('bookingDate');
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.min = today; 
-    dateInput.value = today;
+    const today = new Date();
+    const localDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    
+    dateInput.min = localDate; 
+    dateInput.value = localDate;
 
     // Load slots for today immediately
     generateSlots();
-    fetchBookedSlots(today);
+    fetchBookedSlots(localDate);
 
     // Listen for date changes
     dateInput.addEventListener('change', (e) => {
@@ -33,7 +35,7 @@ let selectedSlot = null;
 let selectedRoom = null;
 let currentBookings = []; // Stores data from server
 
-// ✅ THE 13 SPECIFIC ROOMS
+// ✅ ALL 13 ROOMS RESTORED
 const ROOMS = [
     "Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507",
     "Room 601", "Room 602",
@@ -41,7 +43,7 @@ const ROOMS = [
     "Room 801", "Room 802"
 ];
 
-// --- 3. GENERATE TIME SLOTS (09:00 AM - 05:00 PM) ---
+// --- 3. GENERATE TIME SLOTS ---
 function generateSlots() {
     const grid = document.getElementById('slotGrid');
     grid.innerHTML = ""; // Clear existing
@@ -61,7 +63,7 @@ function generateSlots() {
     });
 }
 
-// --- 4. FETCH DATA FROM SERVER (Handles "Library Closed" too) ---
+// --- 4. FETCH DATA FROM SERVER ---
 async function fetchBookedSlots(dateStr) {
     try {
         const res = await fetch(`${BACKEND_URL}/get-bookings?date=${dateStr}`);
@@ -70,59 +72,60 @@ async function fetchBookedSlots(dateStr) {
         // 🛑 CHECK IF LIBRARY IS CLOSED BY ADMIN
         if (data.status === "closed") {
             alert(`⛔ LIBRARY CLOSED: ${data.reason}`);
-            
             // Disable everything
             document.querySelectorAll('.slot-btn').forEach(btn => {
-                btn.className = 'slot-btn booked'; // Turn grey
+                btn.className = 'slot-btn booked'; 
                 btn.innerHTML += '<br><small style="color:red; font-size:10px;">CLOSED</small>';
-                btn.onclick = null; // Remove click
+                btn.onclick = null; 
             });
             document.getElementById('roomGrid').innerHTML = "<p style='color:red; text-align:center;'>Library Closed</p>";
-            return; // STOP HERE
+            return; 
         }
 
         // Proceed normally
         currentBookings = data.bookings || [];
-        updateSlotAvailability();
+        updateSlotAvailability(dateStr); // Pass date to check past times
 
     } catch (err) {
         console.error("Error connecting to server:", err);
     }
 }
 
-// --- 5. LOGIC: CLICK A SLOT -> SHOW ROOMS ---
+// --- 5. SELECTION LOGIC ---
 function selectSlot(element, time) {
-    // 1. Visual selection
+    // If button is booked or disabled (past time), do nothing
+    if (element.classList.contains('booked')) return;
+
+    // Visual selection
     document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
     element.classList.add('selected');
     
-    // 2. Save choice
+    // Save choice
     selectedSlot = time;
-    selectedRoom = null; // Reset room when time changes
+    selectedRoom = null; 
 
-    // 3. Filter Rooms
+    // Filter Rooms
     showAvailableRooms(time);
 }
 
-// --- 6. SHOW ROOMS BASED ON SELECTED SLOT ---
+// --- 6. SHOW ROOMS ---
 function showAvailableRooms(slotTime) {
     const roomGrid = document.getElementById('roomGrid');
-    roomGrid.innerHTML = ""; // Clear old rooms
+    roomGrid.innerHTML = ""; 
 
     ROOMS.forEach(room => {
-        // Check if this specific room is booked at this specific time
+        // Check if this room is booked
         const isBooked = currentBookings.some(b => 
             b.time_slot === slotTime && b.room_id === room
         );
 
         const btn = document.createElement('button');
         btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
-        btn.innerText = room; // Shows "Room 501", etc.
+        btn.innerText = room; 
         btn.disabled = isBooked;
 
         if (!isBooked) {
             btn.onclick = () => {
-                // Select Room
                 document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedRoom = room; 
@@ -135,40 +138,75 @@ function showAvailableRooms(slotTime) {
     });
 }
 
-// --- 7. HELPER: UPDATE SLOT COLORS ---
-function updateSlotAvailability() {
-    // Reset all slots to free first
-    document.querySelectorAll('.slot-btn').forEach(btn => {
-        btn.className = 'slot-btn free';
-        // Re-attach click listener
-        const time = btn.innerText;
-        btn.onclick = () => selectSlot(btn, time);
-    });
+// --- 7. UPDATE SLOTS (PAST TIME & FULL SLOTS) ---
+function updateSlotAvailability(selectedDateStr) {
+    // 1. Get Current Date/Time Info
+    const now = new Date();
+    // Construct selected date object to compare
+    const selectedDate = new Date(selectedDateStr);
+    const isToday = selectedDate.toDateString() === now.toDateString();
+    const currentHour = now.getHours();
 
-    // Count how many rooms are booked for each slot
+    // 2. Count bookings per slot
     const slotCounts = {};
     currentBookings.forEach(b => {
         slotCounts[b.time_slot] = (slotCounts[b.time_slot] || 0) + 1;
     });
 
-    // If all 13 rooms are taken, mark slot as FULL
+    // 3. Loop through buttons to disable Past or Full slots
     document.querySelectorAll('.slot-btn').forEach(btn => {
-        const time = btn.innerText;
-        if (slotCounts[time] >= 13) { 
+        const timeText = btn.innerText; // e.g., "09:00 AM - 10:00 AM"
+        
+        // Reset first
+        btn.className = 'slot-btn free';
+        btn.onclick = () => selectSlot(btn, timeText);
+
+        // --- A. PAST TIME CHECK ---
+        if (isToday) {
+            const startHour = getStartHour(timeText);
+            // If the slot start hour is less than or equal to current hour
+            // e.g. if it is 10:18 (hour 10), then 9 (09-10) is past. 
+            // 10 (10-11) has already started, so we usually block it too.
+            if (startHour <= currentHour) {
+                btn.className = 'slot-btn booked';
+                btn.onclick = null;
+                btn.innerHTML = `${timeText}<br><small style="color:#888;">EXPIRED</small>`;
+                return; // Skip full check if expired
+            }
+        }
+
+        // --- B. FULL SLOT CHECK (13 Rooms) ---
+        if (slotCounts[timeText] >= 13) { 
             btn.className = 'slot-btn booked';
-            btn.onclick = null; // Disable click
-            btn.innerHTML = `${time}<br><small style="color:red;">FULL</small>`;
+            btn.onclick = null; 
+            btn.innerHTML = `${timeText}<br><small style="color:red;">FULL</small>`;
         }
     });
+}
+
+// Helper to convert "09:00 AM..." to integer 9, "01:00 PM" to 13
+function getStartHour(timeString) {
+    // Extract "09" and "AM"
+    const parts = timeString.split(' - ')[0]; // "09:00 AM"
+    let hour = parseInt(parts.split(':')[0]); // 9
+    const ampm = parts.split(' ')[1]; // "AM"
+
+    if (ampm === "PM" && hour !== 12) {
+        hour += 12;
+    }
+    if (ampm === "AM" && hour === 12) {
+        hour = 0;
+    }
+    return hour;
 }
 
 // --- 8. GROUP MEMBERS INPUTS ---
 function updateMemberFields() {
     const size = document.getElementById('groupSize').value;
     const container = document.getElementById('groupMembersContainer');
-    container.innerHTML = ""; // Clear
+    container.innerHTML = ""; 
 
-    for (let i = 1; i < size; i++) { // Start from 1 because Leader is 0
+    for (let i = 1; i < size; i++) { 
         const div = document.createElement('div');
         div.className = 'member-input-block';
         div.innerHTML = `
@@ -185,9 +223,8 @@ function updateMemberFields() {
     }
 }
 
-// --- 9. FINAL STEP: BOOK THE ROOM ---
+// --- 9. BOOKING FUNCTION ---
 async function bookRoom() {
-    // 1. Validation
     if (!selectedSlot || !selectedRoom) {
         alert("⚠️ Please select a Time Slot and a Room.");
         return;
@@ -195,7 +232,7 @@ async function bookRoom() {
 
     const leaderName = document.getElementById('leaderName').value;
     const rollNo = document.getElementById('rollNo').value;
-    const email = document.getElementById('email').value; // ✅ CRITICAL FOR EMAIL
+    const email = document.getElementById('email').value; 
     const dateStr = document.getElementById('bookingDate').value;
     const purpose = document.getElementById('purpose').value;
 
@@ -204,7 +241,6 @@ async function bookRoom() {
         return;
     }
 
-    // 2. Gather Member Data
     const members = [];
     document.querySelectorAll('.member-input-block').forEach(block => {
         members.push({
@@ -213,7 +249,6 @@ async function bookRoom() {
         });
     });
 
-    // 3. Prepare Payload
     const bookingData = {
         room_id: selectedRoom,
         date: dateStr,
@@ -226,7 +261,6 @@ async function bookRoom() {
         purpose: purpose
     };
 
-    // 4. Send to Backend
     const btn = document.getElementById('confirmBtn');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
@@ -242,9 +276,8 @@ async function bookRoom() {
         const result = await res.json();
 
         if (result.status === 'success') {
-            // Save receipt to local storage for the success page
             localStorage.setItem("bookingReceipt", JSON.stringify(bookingData));
-            window.location.href = "success.html"; // Go to receipt
+            window.location.href = "success.html"; 
         } else {
             alert("❌ Error: " + result.message);
             btn.innerHTML = originalText;

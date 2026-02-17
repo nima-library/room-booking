@@ -17,7 +17,6 @@
             margin-bottom: 20px; 
         }
         
-        /* New Control Panel Grid */
         .control-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -49,20 +48,51 @@
             margin-top: 10px;
         }
 
-        /* Login Overlay */
+        /* --- LOGIN OVERLAY STYLES --- */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(44, 62, 80, 0.95); z-index: 999;
             display: flex; justify-content: center; align-items: center;
         }
-        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; width: 320px; }
-        .login-box input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; }
+        .login-box { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 10px; 
+            text-align: center; 
+            width: 320px; 
+            position: relative; /* Needed for the X button positioning */
+        }
+        .login-box input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; box-sizing: border-box;}
+        
+        /* THE NEW CLOSE BUTTON */
+        .close-login-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #999;
+            font-size: 20px;
+            text-decoration: none;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .close-login-btn:hover {
+            color: #c0392b;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 600px) {
+            .control-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
     <div class="login-box">
+        <a href="index.html" class="close-login-btn" title="Back to Home">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+
         <i class="fa-solid fa-user-shield" style="font-size: 40px; color: #c0392b; margin-bottom: 15px;"></i>
         <h2>Admin Login</h2>
         <input type="password" id="adminPass" placeholder="Enter Admin Password">
@@ -89,8 +119,8 @@
             <div class="control-card">
                 <h3><i class="fa-solid fa-ban" style="color:#c0392b;"></i> Close Library (Full Day)</h3>
                 <p style="font-size: 13px; color: #666;">Close booking for festivals or holidays.</p>
-                <input type="date" id="blockDateInput">
-                <input type="text" id="blockReason" placeholder="Reason (e.g. Holi)" style="margin-top:10px;">
+                <input type="date" id="blockDateInput" style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd;">
+                <input type="text" id="blockReason" placeholder="Reason (e.g. Holi)" style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd;">
                 <button class="block-btn" onclick="blockDay()">Close This Date</button>
             </div>
 
@@ -98,9 +128,9 @@
                 <h3><i class="fa-solid fa-clock" style="color:#f39c12;"></i> Block Specific Slot</h3>
                 <p style="font-size: 13px; color: #666;">Reserve a slot as "Maintenance" to block it.</p>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input type="date" id="slotDate">
-                    <select id="slotTime">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:10px;">
+                    <input type="date" id="slotDate" style="padding:10px; border:1px solid #ddd;">
+                    <select id="slotTime" style="padding:10px; border:1px solid #ddd;">
                         <option>09:00 AM - 10:00 AM</option>
                         <option>10:00 AM - 11:00 AM</option>
                         <option>11:00 AM - 12:00 PM</option>
@@ -111,11 +141,12 @@
                         <option>04:00 PM - 05:00 PM</option>
                     </select>
                 </div>
-                <select id="slotRoom" style="margin-top:10px;">
-                    <option>Discussion Room 1</option>
-                    <option>Discussion Room 2</option>
-                    <option>Discussion Room 3</option>
-                    <option>Discussion Room 4</option>
+                <select id="slotRoom" style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd;">
+                    <option>Room 501</option><option>Room 502</option><option>Room 503</option><option>Room 504</option>
+                    <option>Room 505</option><option>Room 506</option><option>Room 507</option>
+                    <option>Room 601</option><option>Room 602</option>
+                    <option>Room 701</option><option>Room 702</option>
+                    <option>Room 801</option><option>Room 802</option>
                 </select>
                 <button class="block-btn" style="background: #f39c12;" onclick="blockSlot()">Block This Slot</button>
             </div>
@@ -151,6 +182,7 @@
 </div>
 
 <script>
+    // ✅ CHECK THIS URL (Must match your backend)
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
 
     // 1. LOGIN
@@ -179,9 +211,10 @@
             const data = await res.json();
             tbody.innerHTML = ""; 
             if (data.bookings && data.bookings.length > 0) {
+                // Sort by Date (Newest first)
                 data.bookings.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
                 data.bookings.forEach(b => {
-                    // Check if it's an Admin Block
                     let rowStyle = "";
                     let nameDisplay = `<strong>${b.leader}</strong><br><span style="font-size:12px; color:#888;">${b.roll_no}</span>`;
                     
@@ -225,7 +258,7 @@
         } catch (err) { alert("Failed."); }
     }
 
-    // 4. BLOCK DAY (NEW)
+    // 4. BLOCK DAY
     async function blockDay() {
         const date = document.getElementById('blockDateInput').value;
         const reason = document.getElementById('blockReason').value || "Closed";
@@ -241,7 +274,7 @@
         } catch (err) { alert("Error blocking date"); }
     }
 
-    // 5. BLOCK SPECIFIC SLOT (NEW)
+    // 5. BLOCK SPECIFIC SLOT
     async function blockSlot() {
         const date = document.getElementById('slotDate').value;
         const time = document.getElementById('slotTime').value;
@@ -249,7 +282,6 @@
 
         if(!date) return alert("Select a date");
 
-        // We simply "Book" the slot as Admin
         const bookingData = {
             room_id: room,
             date: date,
@@ -257,7 +289,7 @@
             leader_name: "ADMIN BLOCK",
             leader_roll_no: "N/A",
             group_size: "0",
-            email: "", // No email needed for block
+            email: "", 
             details: { purpose: "Maintenance/Closure" }
         };
 
