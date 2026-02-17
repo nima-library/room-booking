@@ -14,10 +14,10 @@ body {
     margin: 0;
     min-height: 100vh;
     color: var(--primary-dark);
-    overflow-x: hidden; /* Prevents side scrolling */
+    overflow-x: hidden;
 }
 
-/* --- 🔴 HEADER STYLES (Fixed) --- */
+/* --- 🔴 HEADER STYLES --- */
 .nirma-header {
     background-color: var(--nirma-red);
     color: white;
@@ -28,7 +28,7 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     position: relative;
     z-index: 1000;
-    height: 70px; /* Fixed height to prevent growing */
+    height: 70px;
 }
 
 .header-content {
@@ -64,7 +64,7 @@ body {
     opacity: 0.9;
 }
 
-/* Login Button - Desktop */
+/* Login Button */
 .header-login-btn {
     background: rgba(255,255,255,0.2);
     color: white;
@@ -75,7 +75,7 @@ body {
     padding: 8px 15px;
     border-radius: 20px;
     transition: 0.3s;
-    white-space: nowrap; /* Prevents text breaking */
+    white-space: nowrap;
 }
 
 .header-login-btn:hover {
@@ -83,13 +83,13 @@ body {
     color: var(--nirma-red);
 }
 
-/* --- 🖼️ SLIDESHOW (Fixed Height) --- */
+/* --- 🖼️ SLIDESHOW --- */
 .slideshow-container {
     width: 100%;
-    height: 350px; /* Fixed height for consistency */
+    height: 350px; /* Fixed height */
     position: relative;
     overflow: hidden;
-    background: #1e2a4a; /* Blue fallback if image fails */
+    background: #1e2a4a;
 }
 
 .mySlides {
@@ -101,46 +101,48 @@ body {
 .mySlides img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* This stops the image from stretching */
-    opacity: 0.7; 
+    object-fit: cover;
+    opacity: 0.9; /* Made brighter */
 }
 
-/* --- MAIN FORM AREA --- */
+/* --- MAIN FORM AREA (FIXED) --- */
 .main-wrapper {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
-    margin-top: -60px; /* Overlap effect */
-    z-index: 10;
-    padding-bottom: 40px;
+    /* ✅ REMOVED NEGATIVE MARGIN: No more overlapping/merging */
+    margin-top: 0; 
+    padding-top: 30px;
+    background: var(--bg-color); /* Ensures clean background */
 }
 
 .container {
     max-width: 600px; 
-    width: 95%; /* Better width on mobile */
+    width: 95%;
     padding: 0 15px;
     box-sizing: border-box;
 }
 
+/* ✅ FIXED INTRO TEXT: Dark Color on White Background */
 .form-intro {
     text-align: center;
-    margin-bottom: 20px;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    margin-bottom: 25px;
+    color: var(--primary-dark); /* Dark Text */
+    text-shadow: none; /* No shadow needed */
 }
-.form-intro h3 { margin: 0; font-size: 22px; }
-.form-intro p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
+.form-intro h3 { margin: 0; font-size: 24px; justify-content: center; }
+.form-intro p { margin: 5px 0 0; font-size: 15px; color: var(--secondary-text); }
 
 /* --- CARD STYLES --- */
 .card {
     background: var(--card-bg);
-    padding: 25px; /* Slightly reduced padding */
+    padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     margin-bottom: 20px;
-    border: 1px solid #eee;
+    border: 1px solid #e2e8f0;
 }
 
 h3 {
@@ -155,7 +157,7 @@ h3 {
 }
 h3 i { color: var(--nirma-red); }
 
-/* --- INPUTS (Fixed Stacking) --- */
+/* --- INPUTS --- */
 .input-group {
     position: relative;
     margin-bottom: 15px;
@@ -171,11 +173,10 @@ h3 i { color: var(--nirma-red); }
     font-size: 16px;
 }
 
-/* Ensure inputs don't collapse */
 input, select {
     width: 100%;
-    height: 50px; /* Fixed height ensures no squashing */
-    padding: 0 15px 0 45px; /* Comfortable padding */
+    height: 50px;
+    padding: 0 15px 0 45px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     box-sizing: border-box;
@@ -186,7 +187,7 @@ input, select {
 }
 
 select {
-    appearance: none; /* Removes default ugly arrow */
+    appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 15px center;
@@ -212,7 +213,6 @@ input:focus, select:focus {
     gap: 8px;
 }
 
-/* Buttons */
 .slot-btn, .room-btn {
     padding: 12px;
     border: 1px solid #e2e8f0;
@@ -245,30 +245,20 @@ input:focus, select:focus {
     cursor: pointer;
 }
 
-/* --- 📱 MOBILE SPECIFIC FIXES --- */
+/* --- 📱 MOBILE FIXES --- */
 @media (max-width: 600px) {
-    /* Fix the Header Height */
     .nirma-header {
         padding: 10px 15px;
-        height: auto; /* Allow auto height but control contents */
-        flex-wrap: nowrap; /* Keep them in one line */
+        height: auto;
+        flex-wrap: nowrap;
     }
+    .header-logo { height: 40px; }
+    .header-titles h1 { font-size: 14px; }
+    .header-titles h2 { display: none; }
 
-    .header-logo {
-        height: 40px; /* Smaller logo */
-    }
-
-    .header-titles h1 {
-        font-size: 14px; /* Smaller text */
-    }
-    .header-titles h2 {
-        display: none; /* Hide subtitle on tiny screens to save space */
-    }
-
-    /* Compact Login Button (Icon Only on Mobile) */
     .header-login-btn {
         padding: 8px;
-        border-radius: 50%; /* Make it a circle */
+        border-radius: 50%;
         width: 35px;
         height: 35px;
         display: flex;
@@ -277,22 +267,9 @@ input:focus, select:focus {
         border: none;
         background: rgba(255,255,255,0.2);
     }
-    
-    .header-login-btn span {
-        display: none; /* Hide the word "Librarian Login" */
-    }
-    
-    .header-login-btn i {
-        font-size: 14px;
-        margin: 0;
-    }
+    .header-login-btn span { display: none; }
+    .header-login-btn i { font-size: 14px; margin: 0; }
 
-    /* Fix Slideshow Height */
-    .slideshow-container {
-        height: 220px; /* Smaller height for phone */
-    }
-    
-    .main-wrapper {
-        margin-top: -40px;
-    }
+    .slideshow-container { height: 220px; }
+    .main-wrapper { padding-top: 20px; }
 }
