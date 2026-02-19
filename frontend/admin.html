@@ -8,91 +8,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Admin Specific Styles */
-        .admin-header { 
-            background: linear-gradient(135deg, #c0392b, #e74c3c); 
-            color: white; 
-            padding: 25px; 
-            border-radius: 10px; 
-            margin-bottom: 20px; 
-        }
-        
-        .control-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .control-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border: 1px solid #eee;
-        }
-
+        .admin-header { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .control-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; }
         .booking-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         .booking-table th { background: #f8f9fa; padding: 12px; text-align: left; }
         .booking-table td { padding: 12px; border-bottom: 1px solid #eee; }
-        
-        .delete-btn {
-            background: #ffebee; color: #c0392b; border: 1px solid #c0392b;
-            padding: 6px 12px; border-radius: 4px; cursor: pointer;
-        }
+        .delete-btn { background: #ffebee; color: #c0392b; border: 1px solid #c0392b; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
         .delete-btn:hover { background: #c0392b; color: white; }
-
-        .block-btn {
-            background: #34495e; color: white; border: none;
-            padding: 10px; width: 100%; border-radius: 6px; cursor: pointer;
-            margin-top: 10px;
-        }
-
-        /* --- LOGIN OVERLAY STYLES --- */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 62, 80, 0.95); z-index: 999;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .login-box { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 10px; 
-            text-align: center; 
-            width: 320px; 
-            position: relative; /* Needed for the X button positioning */
-        }
+        .block-btn { background: #34495e; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.95); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; width: 320px; position: relative; }
         .login-box input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; box-sizing: border-box;}
-        
-        /* THE NEW CLOSE BUTTON */
-        .close-login-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            color: #999;
-            font-size: 20px;
-            text-decoration: none;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        .close-login-btn:hover {
-            color: #c0392b;
-            transform: scale(1.1);
-        }
-
-        @media (max-width: 600px) {
-            .control-grid { grid-template-columns: 1fr; }
-        }
+        .close-login-btn { position: absolute; top: 15px; right: 15px; color: #999; font-size: 20px; text-decoration: none; transition: 0.2s; cursor: pointer; }
+        .close-login-btn:hover { color: #c0392b; transform: scale(1.1); }
+        @media (max-width: 600px) { .control-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
     <div class="login-box">
-        <a href="index.html" class="close-login-btn" title="Back to Home">
-            <i class="fa-solid fa-xmark"></i>
-        </a>
-
+        <a href="index.html" class="close-login-btn" title="Back to Home"><i class="fa-solid fa-xmark"></i></a>
         <i class="fa-solid fa-user-shield" style="font-size: 40px; color: #c0392b; margin-bottom: 15px;"></i>
         <h2>Admin Login</h2>
         <input type="password" id="adminPass" placeholder="Enter Admin Password">
@@ -109,9 +46,7 @@
                     <h1><i class="fa-solid fa-shield-halved"></i> Librarian Dashboard</h1>
                     <p style="margin:0; opacity: 0.9;">Manage reservations & Facility Status</p>
                 </div>
-                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="location.reload()">
-                    Logout
-                </button>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="location.reload()">Logout</button>
             </div>
         </div>
 
@@ -125,84 +60,82 @@
             </div>
 
             <div class="control-card">
-                <h3><i class="fa-solid fa-clock" style="color:#f39c12;"></i> Block Specific Slot</h3>
-                <p style="font-size: 13px; color: #666;">Reserve a slot as "Maintenance" to block it.</p>
+                <h3><i class="fa-solid fa-clock" style="color:#f39c12;"></i> Close Specific Hours</h3>
+                <p style="font-size: 13px; color: #666;">Block all rooms for a specific time range.</p>
                 
+                <input type="date" id="rangeDate" style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:10px;">
-                    <input type="date" id="slotDate" style="padding:10px; border:1px solid #ddd;">
-                    <select id="slotTime" style="padding:10px; border:1px solid #ddd;">
-                        <option>09:00 AM - 10:00 AM</option>
-                        <option>10:00 AM - 11:00 AM</option>
-                        <option>11:00 AM - 12:00 PM</option>
-                        <option>12:00 PM - 01:00 PM</option>
-                        <option>01:00 PM - 02:00 PM</option>
-                        <option>02:00 PM - 03:00 PM</option>
-                        <option>03:00 PM - 04:00 PM</option>
-                        <option>04:00 PM - 05:00 PM</option>
-                    </select>
+                    <div>
+                        <label style="font-size: 12px; color: #666;">From:</label>
+                        <select id="timeStart" style="padding:10px; border:1px solid #ddd; width:100%;">
+                            <option value="09:00 AM - 10:00 AM">09:00 AM</option>
+                            <option value="10:00 AM - 11:00 AM">10:00 AM</option>
+                            <option value="11:00 AM - 12:00 PM">11:00 AM</option>
+                            <option value="12:00 PM - 01:00 PM">12:00 PM</option>
+                            <option value="01:00 PM - 02:00 PM">01:00 PM</option>
+                            <option value="02:00 PM - 03:00 PM">02:00 PM</option>
+                            <option value="03:00 PM - 04:00 PM">03:00 PM</option>
+                            <option value="04:00 PM - 05:00 PM">04:00 PM</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #666;">To:</label>
+                        <select id="timeEnd" style="padding:10px; border:1px solid #ddd; width:100%;">
+                            <option value="09:00 AM - 10:00 AM">10:00 AM</option>
+                            <option value="10:00 AM - 11:00 AM">11:00 AM</option>
+                            <option value="11:00 AM - 12:00 PM">12:00 PM</option>
+                            <option value="12:00 PM - 01:00 PM">01:00 PM</option>
+                            <option value="01:00 PM - 02:00 PM">02:00 PM</option>
+                            <option value="02:00 PM - 03:00 PM">03:00 PM</option>
+                            <option value="03:00 PM - 04:00 PM">04:00 PM</option>
+                            <option value="04:00 PM - 05:00 PM">05:00 PM</option>
+                        </select>
+                    </div>
                 </div>
-                <select id="slotRoom" style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd;">
-                    <option>Room 501</option><option>Room 502</option><option>Room 503</option><option>Room 504</option>
-                    <option>Room 505</option><option>Room 506</option><option>Room 507</option>
-                    <option>Room 601</option><option>Room 602</option>
-                    <option>Room 701</option><option>Room 702</option>
-                    <option>Room 801</option><option>Room 802</option>
-                </select>
-                <button class="block-btn" style="background: #f39c12;" onclick="blockSlot()">Block This Slot</button>
+                <button class="block-btn" style="background: #f39c12;" onclick="blockHourRange()">Close These Hours</button>
             </div>
         </div>
 
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin:0;"><i class="fa-solid fa-list"></i> Active Bookings</h3>
-                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 14px;" onclick="loadAllBookings()">
-                    <i class="fa-solid fa-rotate"></i> Refresh
-                </button>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 14px;" onclick="loadAllBookings()"><i class="fa-solid fa-rotate"></i> Refresh</button>
             </div>
-
             <div style="overflow-x: auto;">
                 <table class="booking-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Room</th>
-                            <th>Booked By</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTableBody">
-                        <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
-                    </tbody>
+                    <thead><tr><th>Date</th><th>Time</th><th>Room</th><th>Booked By</th><th>Action</th></tr></thead>
+                    <tbody id="adminTableBody"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
                 </table>
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
-    // ✅ CHECK THIS URL (Must match your backend)
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
+    
+    // The master list of times for range calculation
+    const ALL_TIMES = [
+        "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM",
+        "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM",
+        "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM"
+    ];
 
-    // 1. LOGIN
+    const ALL_ROOMS = [
+        "Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507",
+        "Room 601", "Room 602", "Room 701", "Room 702", "Room 801", "Room 802"
+    ];
+
     async function checkLogin() {
         const pass = document.getElementById("adminPass").value;
         try {
-            const res = await fetch(`${BACKEND_URL}/admin-login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password: pass })
-            });
+            const res = await fetch(`${BACKEND_URL}/admin-login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pass }) });
             const result = await res.json();
-            if (result.status === "success") {
-                document.getElementById("loginOverlay").style.display = "none";
-                loadAllBookings();
-            } else { alert("❌ Wrong Password"); }
+            if (result.status === "success") { document.getElementById("loginOverlay").style.display = "none"; loadAllBookings(); } 
+            else { alert("❌ Wrong Password"); }
         } catch (err) { alert("Server Error"); }
     }
 
-    // 2. LOAD DATA
     async function loadAllBookings() {
         const tbody = document.getElementById("adminTableBody");
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
@@ -211,9 +144,7 @@
             const data = await res.json();
             tbody.innerHTML = ""; 
             if (data.bookings && data.bookings.length > 0) {
-                // Sort by Date (Newest first)
                 data.bookings.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
                 data.bookings.forEach(b => {
                     let rowStyle = "";
                     let nameDisplay = `<strong>${b.leader}</strong><br><span style="font-size:12px; color:#888;">${b.roll_no}</span>`;
@@ -222,18 +153,10 @@
                         rowStyle = "background: #fff3e0;";
                         nameDisplay = `<strong style="color: #d35400;">⚠️ BLOCKED BY ADMIN</strong>`;
                     }
-
                     const row = `
                         <tr style="${rowStyle}">
-                            <td>${b.date}</td>
-                            <td>${b.time_slot}</td>
-                            <td>${b.room_id}</td>
-                            <td>${nameDisplay}</td>
-                            <td>
-                                <button class="delete-btn" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">
-                                    <i class="fa-solid fa-trash"></i> Cancel
-                                </button>
-                            </td>
+                            <td>${b.date}</td><td>${b.time_slot}</td><td>${b.room_id}</td><td>${nameDisplay}</td>
+                            <td><button class="delete-btn" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')"><i class="fa-solid fa-trash"></i> Cancel</button></td>
                         </tr>`;
                     tbody.innerHTML += row;
                 });
@@ -241,72 +164,62 @@
         } catch (err) { console.error(err); }
     }
 
-    // 3. DELETE (SENDS EMAIL AUTOMATICALLY)
     async function deleteBooking(roomId, date, timeSlot) {
         if (!confirm(`Cancel this booking? The student will be notified via email.`)) return;
         try {
-            const res = await fetch(`${BACKEND_URL}/cancel-booking`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot })
-            });
+            const res = await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
             const result = await res.json();
-            if (result.status === "success") {
-                alert("Booking Cancelled & Email Sent!");
-                loadAllBookings();
-            } else { alert("Error: " + result.message); }
+            if (result.status === "success") { alert("Booking Cancelled & Email Sent!"); loadAllBookings(); } 
+            else { alert("Error: " + result.message); }
         } catch (err) { alert("Failed."); }
     }
 
-    // 4. BLOCK DAY
     async function blockDay() {
         const date = document.getElementById('blockDateInput').value;
         const reason = document.getElementById('blockReason').value || "Closed";
         if(!date) return alert("Select a date");
-
         try {
-            const res = await fetch(`${BACKEND_URL}/admin/block-day`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ date: date, reason: reason })
-            });
+            await fetch(`${BACKEND_URL}/admin/block-day`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: date, reason: reason }) });
             alert("Date Blocked Successfully!");
         } catch (err) { alert("Error blocking date"); }
     }
 
-    // 5. BLOCK SPECIFIC SLOT
-    async function blockSlot() {
-        const date = document.getElementById('slotDate').value;
-        const time = document.getElementById('slotTime').value;
-        const room = document.getElementById('slotRoom').value;
+    // ✅ NEW: CALCULATE RANGE AND BLOCK MULTIPLE SLOTS
+    async function blockHourRange() {
+        const date = document.getElementById('rangeDate').value;
+        const start = document.getElementById('timeStart').value;
+        const end = document.getElementById('timeEnd').value;
 
         if(!date) return alert("Select a date");
 
-        const bookingData = {
-            room_id: room,
-            date: date,
-            time_slot: time,
-            leader_name: "ADMIN BLOCK",
-            leader_roll_no: "N/A",
-            group_size: "0",
-            email: "", 
-            details: { purpose: "Maintenance/Closure" }
-        };
+        const startIndex = ALL_TIMES.indexOf(start);
+        const endIndex = ALL_TIMES.indexOf(end);
+
+        if (startIndex > endIndex) {
+            return alert("❌ Invalid Range: Start time must be before End time!");
+        }
+
+        // Get the list of slots that fall between Start and End
+        const slotsToBlock = ALL_TIMES.slice(startIndex, endIndex + 1);
 
         try {
-            const res = await fetch(`${BACKEND_URL}/confirm-booking`, {
+            const res = await fetch(`${BACKEND_URL}/admin/block-slots`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(bookingData)
+                body: JSON.stringify({
+                    date: date,
+                    slots: slotsToBlock,
+                    rooms: ALL_ROOMS
+                })
             });
             const result = await res.json();
             if(result.status === "success") {
-                alert("Slot Blocked Successfully!");
+                alert(`Successfully blocked ${slotsToBlock.length} hours across all 13 rooms!`);
                 loadAllBookings();
             } else {
-                alert("Slot is already booked/blocked!");
+                alert("Error blocking slots.");
             }
-        } catch(err) { alert("Error"); }
+        } catch(err) { alert("Network Error"); }
     }
 </script>
 </body>
