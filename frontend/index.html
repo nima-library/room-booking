@@ -88,11 +88,25 @@
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-building-columns input-icon"></i>
-                <input type="text" id="institute" placeholder="Institute" required>
+                <select id="institute" required>
+                    <option value="" disabled selected>Select Institute</option>
+                    <option value="ITNU">ITNU</option>
+                    <option value="IMNU">IMNU</option>
+                    <option value="ISNU">ISNU</option>
+                    <option value="IDNU">IDNU</option>
+                    <option value="IAPNU">IAPNU</option>
+                    <option value="IPNU">IPNU</option>
+                    <option value="ILNU">ILNU</option>
+                    <option value="ICNU">ICNU</option>
+                    <option value="FDSR">FDSR</option>
+                    <option value="International Study">International Study</option>
+                </select>
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-code-branch input-icon"></i>
-                <input type="text" id="department" placeholder="Department" required>
+                <select id="department" required>
+                    <option value="" disabled selected>Select Department</option>
+                </select>
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-user-graduate input-icon"></i>
@@ -123,10 +137,14 @@
                 <i class="fa-solid fa-bullseye input-icon"></i>
                 <select id="purpose" required>
                     <option value="" disabled selected>Select Purpose</option>
-                    <option>Group Study</option>
-                    <option>Project Discussion</option>
-                    <option>Other</option>
+                    <option value="Group Study">Group Study</option>
+                    <option value="Project Discussion">Project Discussion</option>
+                    <option value="Other">Other</option>
                 </select>
+            </div>
+            <div class="input-group" id="otherPurposeGroup" style="display:none; margin-top: 10px;">
+                <i class="fa-solid fa-pencil input-icon"></i>
+                <input type="text" id="customPurpose" placeholder="Describe your purpose" />
             </div>
         </div>
 

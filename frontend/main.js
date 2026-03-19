@@ -20,6 +20,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('groupSize').addEventListener('change', updateMemberFields);
+
+    const instituteSelect = document.getElementById('institute');
+    instituteSelect.addEventListener('change', () => {
+        updateDepartmentOptions(instituteSelect.value);
+    });
+
+    const purposeSelect = document.getElementById('purpose');
+    const otherPurposeGroup = document.getElementById('otherPurposeGroup');
+    const customPurposeInput = document.getElementById('customPurpose');
+
+    purposeSelect.addEventListener('change', () => {
+        if (purposeSelect.value === 'Other') {
+            otherPurposeGroup.style.display = 'flex';
+            customPurposeInput.required = true;
+        } else {
+            otherPurposeGroup.style.display = 'none';
+            customPurposeInput.required = false;
+            customPurposeInput.value = '';
+        }
+    });
+
+    // initialize empty department options
+    updateDepartmentOptions(instituteSelect.value);
 });
 
 let selectedSlot = null;
@@ -72,7 +95,14 @@ function showAvailableRooms(slotTime) {
         const isBooked = currentBookings.some(b => b.time_slot === slotTime && b.room_id === room);
         const btn = document.createElement('button');
         btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
-        btn.innerText = room; 
+        const match = room.match(/^(?:Room\s*)(\d{3})$/i);
+        let label = room;
+        if (match) {
+            const roomNumber = match[1];
+            const floor = roomNumber.charAt(0);
+            label = `Floor ${floor} Room ${roomNumber}`;
+        }
+        btn.innerText = label;
         btn.disabled = isBooked;
 
         if (!isBooked) {
@@ -178,26 +208,85 @@ function updateMemberFields() {
     }
 }
 
+function updateDepartmentOptions(instituteCode) {
+    const map = {
+        IAPNU: ["B.Arch", "M.plan", "Ph.D."],
+        ICNU: ["B.com (Hons.)"],
+        IDNU: ["BDes (Product and Interaction design)", "Bdes (Communication design)"],
+        ILNU: ["B.A. + LL.B.(Hons.)", "B.Com. + LL.B.(Hons.)", "B.B.A. + LL.B.(Hons.)", "LL.M. (One year)"],
+        IMNU: ["MBA", "MBA(HRM)", "MBA(Family Business and Entrepreneurship)", "Integrated BBA-MBA", "BBA(Hons.)", "Integrated Btech(Computer Science & engg) + MBA", "Integrated Btech(Mechanical engg) + MBA"],
+        IPNU: ["Pharmaceutics", "Pharmaceutical Chemistry", "Pharmaceutical Analysis", "Pharmacology", "Pharmacognosy"],
+        ISNU: ["Msc in Biotechnology", "Msc in Microbiology"],
+        ITNU: ["Mechanical", "Civil", "Chemical", "Computer Science and Engineering", "Electronics & Communications", "Electronics and Instrumentation", "Mathematics", "Humanities and Social Sciences"],
+        FDSR: ["Faculty of Doctoral Studies"],
+        "International Study": ["Bs (2+2)"]
+    };
+    const departmentSelect = document.getElementById('department');
+    departmentSelect.innerHTML = '<option value="" disabled selected>Select Department</option>';
+
+    const options = map[instituteCode] || [];
+    options.forEach(dep => {
+        const option = document.createElement('option');
+        option.value = dep;
+        option.innerText = dep;
+        departmentSelect.appendChild(option);
+    });
+}
+
 async function bookRoom() {
-    if (!selectedSlot || !selectedRoom) return alert("⚠️ Please select a Time Slot and a Room.");
+    if (!selectedSlot || !selectedRoom) return alert("Please select a Time Slot and a Room.");
     
     const leaderName = document.getElementById('leaderName').value;
     const rollNo = document.getElementById('rollNo').value;
-    const email = document.getElementById('email').value; 
+    const email = document.getElementById('email').value;
+    const institute = document.getElementById('institute').value;
+    const department = document.getElementById('department').value;
     const dateStr = document.getElementById('bookingDate').value;
-    const purpose = document.getElementById('purpose').value;
+    let purpose = document.getElementById('purpose').value;
+    const customPurpose = document.getElementById('customPurpose').value.trim();
 
-    if (!leaderName || !rollNo || !email || !purpose) return alert("⚠️ Please fill in all details.");
+    if (purpose === 'Other') {
+        purpose = customPurpose;
+    }
+
+    if (!leaderName || !rollNo || !email || !institute || !department || !purpose) return alert("⚠️ Please fill in all details.");
+
+    const emailRegex = /^[0-9]{2}[a-zA-Z]{3}[0-9]{3}@nirmauni\.ac\.in$/;
+    if (!emailRegex.test(email)) {
+        alert("Invalid email. Please enter a valid Nirma Uni student email in format: 21ABC001@nirmauni.ac.in");
+        const emailInput = document.getElementById('email');
+        emailInput.focus();
+        emailInput.select();
+        return;
+    }
 
     const members = [];
-    document.querySelectorAll('.member-input-block').forEach(block => {
-        members.push({
-            name: block.querySelector('.mem-name').value,
-            roll: block.querySelector('.mem-roll').value
-        });
+    let missingMemberInfo = false;
+    let missingMemberIndex = -1;
+
+    document.querySelectorAll('.member-input-block').forEach((block, idx) => {
+        const memName = block.querySelector('.mem-name').value.trim();
+        const memRoll = block.querySelector('.mem-roll').value.trim();
+
+        if (!memName || !memRoll) {
+            missingMemberInfo = true;
+            missingMemberIndex = idx + 2; // because the leader is member 1
+        }
+
+        members.push({ name: memName, roll: memRoll });
     });
 
-    const bookingData = { room_id: selectedRoom, date: dateStr, time_slot: selectedSlot, leader_name: leaderName, leader_roll_no: rollNo, email: email, group_size: document.getElementById('groupSize').value, members: members, purpose: purpose };
+    if (missingMemberInfo) {
+        alert(`⚠️ Please fill in all details for member #${missingMemberIndex}.`);
+        const block = document.querySelectorAll('.member-input-block')[missingMemberIndex - 2];
+        if (block) {
+            const firstEmpty = !block.querySelector('.mem-name').value.trim() ? block.querySelector('.mem-name') : block.querySelector('.mem-roll');
+            if (firstEmpty) firstEmpty.focus();
+        }
+        return;
+    }
+
+    const bookingData = { room_id: selectedRoom, date: dateStr, time_slot: selectedSlot, leader_name: leaderName, leader_roll_no: rollNo, email: email, institute: institute, department: department, group_size: document.getElementById('groupSize').value, members: members, purpose: purpose };
 
     const btn = document.getElementById('confirmBtn');
     const originalText = btn.innerHTML;
@@ -211,12 +300,12 @@ async function bookRoom() {
             localStorage.setItem("bookingReceipt", JSON.stringify(bookingData));
             window.location.href = "success.html"; 
         } else {
-            alert("❌ Error: " + result.message);
+            alert("Error: " + result.message);
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     } catch (err) {
-        alert("❌ Failed to connect to server.");
+        alert("Failed to connect to server.");
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
