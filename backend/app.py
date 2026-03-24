@@ -24,7 +24,7 @@ def send_confirmation_email(to_email, booking_data, token):
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
         msg['To'] = to_email
-        msg['Subject'] = f"Booking Confirmed: {booking_data['room_id']} - Nima Library"
+        msg['Subject'] = f"Booking Confirmed: {booking_data['room_id']} - NIMA Knowledge Centre"
         cancel_link = f"https://nima-backend.vercel.app/cancel-via-email?token={token}"
         html_body = f"""
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
@@ -34,6 +34,9 @@ def send_confirmation_email(to_email, booking_data, token):
             <p><strong>Room:</strong> {booking_data['room_id']}<br>
             <strong>Time:</strong> {booking_data['time_slot']}<br>
             <strong>Date:</strong> {booking_data['date']}</p>
+            <br>
+            <p>Thank you,</p>
+            <p style="color: #D32F2F; font-weight: bold;">NIMA Knowledge Centre</p>
             <br>
             <a href="{cancel_link}" style="background: #c0392b; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Cancel Booking</a>
         </div>
@@ -51,16 +54,17 @@ def send_admin_cancellation_email(to_email, name, room, date, time):
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
         msg['To'] = to_email
-        msg['Subject'] = "⚠️ Booking Cancelled by Library - Nima Knowledge Centre"
+        msg['Subject'] = "⚠️ Booking Cancelled - NIMA Knowledge Centre"
         html_body = f"""
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-top: 5px solid #c0392b;">
-            <h2 style="color: #c0392b;">Booking Cancelled</h2>
-            <p>Hello <strong>{name}</strong>,</p>
-            <p>Your reservation has been cancelled by the Library Admin.</p>
+            <h2 style="color: #c0392b;">Booking Cancelled Successfully</h2>
+            <p>Dear {name},</p>
+            <p>As per your request (or Library Admin action), your discussion room booking has been cancelled successfully.</p>
             <div style="background: #f9f9f9; padding: 15px; margin: 15px 0;">
                 <p><strong>Room:</strong> {room}</p><p><strong>Date:</strong> {date}</p><p><strong>Time:</strong> {time}</p>
             </div>
-            <p>Please contact the librarian if you have questions.</p>
+            <p>Thanks,</p>
+            <p style="color: #D32F2F; font-weight: bold;">NIMA Knowledge Centre</p>
         </div>
         """
         msg.attach(MIMEText(html_body, 'html'))
@@ -77,6 +81,17 @@ def send_admin_cancellation_email(to_email, name, room, date, time):
 def confirm_booking():
     try:
         data = request.json
+        
+        # 🛑 RULE 1: DUPLICATE BOOKING CHECK (Same roll no, same day)
+        # Bypassed if Admin is blocking a slot
+        if data['leader_name'] != "ADMIN BLOCK":
+            existing_bookings = db.collection('daily_slots')\
+                .where('date', '==', data['date'])\
+                .where('details.leader_roll_no', '==', data['leader_roll_no']).stream()
+            
+            for _ in existing_bookings:
+                return jsonify({"status": "error", "message": "Duplicate Booking: You have already booked a room for this date. Only 1 booking per day is allowed."}), 400
+
         slot_id = f"{data['room_id']}_{data['date']}_{data['time_slot']}"
         slot_ref = db.collection('daily_slots').document(slot_id)
         cancel_token = str(uuid.uuid4())
@@ -99,7 +114,7 @@ def confirm_booking():
             
         run_txn(transaction, slot_ref, data, cancel_token)
 
-        if data.get('email'):
+        if data.get('email') and data['leader_name'] != "ADMIN BLOCK":
             send_confirmation_email(data['email'], data, cancel_token)
 
         return jsonify({"status": "success", "message": "Booking Confirmed!"}), 200
@@ -120,7 +135,7 @@ def cancel_booking():
 
         slot_ref.delete()
 
-        if user_email:
+        if user_email and leader_name != "ADMIN BLOCK":
             send_admin_cancellation_email(user_email, leader_name, data['room_id'], data['date'], data['time_slot'])
 
         return jsonify({"status": "success", "message": "Cancelled & Email Sent"}), 200
@@ -134,8 +149,20 @@ def cancel_via_email():
         docs = db.collection('daily_slots').where('cancel_token', '==', token).stream()
         found = False
         for doc in docs:
+            # We fetch data before deleting to send the cancellation email
+            booking_info = doc.to_dict()
+            user_email = booking_info.get('details', {}).get('email')
+            leader_name = booking_info.get('details', {}).get('leader_name')
+            room = booking_info.get('room_id')
+            date = booking_info.get('date')
+            time = booking_info.get('time_slot')
+            
             doc.reference.delete()
             found = True
+            
+            if user_email:
+                 send_admin_cancellation_email(user_email, leader_name, room, date, time)
+                 
         if found: return "<h1 style='color:green; text-align:center;'>Booking Cancelled Successfully</h1>", 200
         return "<h1 style='text-align:center;'>Booking not found or already cancelled.</h1>", 404
     except Exception as e: return f"Error: {str(e)}", 500
@@ -148,14 +175,13 @@ def block_day():
         return jsonify({"status": "success"}), 200
     except Exception as e: return jsonify({"status": "error"}), 400
 
-# ✅ NEW ROUTE: BLOCKS A RANGE OF HOURS FOR ALL ROOMS AT ONCE
 @app.route('/admin/block-slots', methods=['POST'])
 def block_slots():
     try:
         data = request.json
         date = data['date']
-        slots = data['slots'] # Array of selected hours
-        rooms = data['rooms'] # Array of all 13 rooms
+        slots = data['slots'] 
+        rooms = data['rooms'] 
         
         batch = db.batch()
         for slot in slots:
@@ -202,7 +228,19 @@ def admin_login():
 @app.route('/admin/all-bookings', methods=['GET'])
 def all_bookings():
     docs = db.collection('daily_slots').stream()
-    data = [{"room_id": d.to_dict().get('room_id'), "date": d.to_dict().get('date'), "time_slot": d.to_dict().get('time_slot'), "leader": d.to_dict().get('details', {}).get('leader_name', 'Unknown'), "roll_no": d.to_dict().get('details', {}).get('leader_roll_no', 'N/A')} for d in docs]
+    data = []
+    for doc in docs:
+        d = doc.to_dict()
+        details = d.get('details', {})
+        data.append({
+            "room_id": d.get('room_id'), 
+            "date": d.get('date'), 
+            "time_slot": d.get('time_slot'), 
+            "leader": details.get('leader_name', 'Unknown'), 
+            "roll_no": details.get('leader_roll_no', 'N/A'),
+            "institute": details.get('institute', 'N/A'), # Added for reports
+            "department": details.get('department', 'N/A') # Added for reports
+        })
     return jsonify({"bookings": data}), 200
 
 if __name__ == '__main__':
