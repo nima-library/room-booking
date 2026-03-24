@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Room Booking | NIMA Knowledge Centre</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nirma-header">
+    <div class="header-content">
+        <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Nirma_University_Logo.png" alt="Nirma Logo" class="header-logo">
+        <div class="header-titles">
+            <h1>NIMA KNOWLEDGE CENTRE</h1>
+            <h2>Room Booking Portal</h2>
+        </div>
+    </div>
+</header>
+
+<div class="slideshow-container">
+    <div class="mySlides fade">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Duke_Humfrey%27s_Library_Interior_6%2C_Bodleian_Library%2C_Oxford%2C_UK_-_Diliff.jpg" style="width:100%">
+    </div>
+    <div class="mySlides fade">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg/1280px-Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg" style="width:100%">
+    </div>
+    <div class="mySlides fade">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Library_of_Congress_Great_Hall_-_Jan_2006.jpg/1280px-Library_of_Congress_Great_Hall_-_Jan_2006.jpg" style="width:100%">
+    </div>
+</div>
+
+<div class="main-wrapper">
+    <div class="container">
+
+        <div class="form-intro">
+            <h3>Reserve Your Space</h3>
+            <p>Select your team details below.</p>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-users"></i> Group Details</h3>
+            <form id="bookingForm">
+                <div class="input-group">
+                    <i class="fa-solid fa-user-tie input-icon"></i>
+                    <input type="text" id="leaderName" placeholder="Leader Name" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-id-card input-icon"></i>
+                    <input type="text" id="rollNo" placeholder="Roll No (e.g. 21BCE001)" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-people-group input-icon"></i>
+                    <select id="groupSize" required>
+                        <option value="" disabled selected>Select Group Size</option>
+                        <option value="3">3 Students</option>
+                        <option value="4">4 Students</option>
+                        <option value="5">5 Students</option>
+                        <option value="6">6 Students</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-users-rectangle"></i> Group Members</h3>
+            <div id="groupMembersContainer">
+                <p style="color:#888; text-align:center; font-size:13px;">Select group size above to add member details</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-graduation-cap"></i> Academic Details</h3>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-envelope input-icon"></i>
+                <input type="email" id="email" placeholder="Email Address" readonly style="background-color: #e9ecef; cursor: not-allowed;" title="Auto-filled from Google Login">
+            </div>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-phone input-icon"></i>
+                <input type="tel" id="contactNo" placeholder="Contact Number" required>
+            </div>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-building-columns input-icon"></i>
+                <select id="institute" required>
+                    <option value="" disabled selected>Select Institute</option>
+                    <option value="ITNU">Institute of Technology (ITNU)</option>
+                    <option value="IMNU">Institute of Management (IMNU)</option>
+                    <option value="IPNU">Institute of Pharmacy (IPNU)</option>
+                    <option value="ILNU">Institute of Law (ILNU)</option>
+                    <option value="ISNU">Institute of Science (ISNU)</option>
+                    <option value="IANU">Institute of Architecture (IANU)</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-code-branch input-icon"></i>
+                <select id="department" required>
+                    <option value="" disabled selected>Select Department</option>
+                    <option value="CSE">Computer Science & Engineering (CSE)</option>
+                    <option value="EC">Electronics & Communication (EC)</option>
+                    <option value="EE">Electrical Engineering (EE)</option>
+                    <option value="ME">Mechanical Engineering (ME)</option>
+                    <option value="CE">Civil Engineering (CE)</option>
+                    <option value="CH">Chemical Engineering (CH)</option>
+                    <option value="IC">Instrumentation & Control (IC)</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-user-graduate input-icon"></i>
+                <select id="programme" required>
+                    <option value="" disabled selected>Select Programme</option>
+                    <option value="BTech">B.Tech (UG)</option>
+                    <option value="MTech">M.Tech (PG)</option>
+                    <option value="MCA">MCA (PG)</option>
+                    <option value="BBA">BBA (UG)</option>
+                    <option value="MBA">MBA (PG)</option>
+                    <option value="PhD">Ph.D.</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-calendar-day"></i> Select Slot</h3>
+            <div class="input-group">
+                <i class="fa-solid fa-calendar-days input-icon"></i>
+                <input type="date" id="bookingDate" required>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin:15px 0 10px;">
+                <h4 style="margin:0; font-size:14px;">Available Time</h4>
+                <div style="font-size:12px; font-weight: 600;">
+                    <i class="fa-solid fa-circle" style="color:#28a745;"></i> Available
+                    <span style="margin-left: 10px;"><i class="fa-solid fa-circle" style="color:#dc3545;"></i> Booked</span>
+                </div>
+            </div>
+            <div class="slot-grid" id="slotGrid"></div>
+
+            <h4 style="margin:20px 0 10px; font-size:14px;">Available Room</h4>
+            <div class="room-grid" id="roomGrid"></div>
+
+            <div class="input-group" style="margin-top: 20px;">
+                <i class="fa-solid fa-bullseye input-icon"></i>
+                <select id="purpose" onchange="toggleOtherPurpose()" required>
+                    <option value="" disabled selected>Select Purpose</option>
+                    <option value="Group Study">Group Study</option>
+                    <option value="Project Discussion">Project Discussion</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="input-group" id="otherPurposeContainer" style="display: none; margin-top: 10px;">
+                <i class="fa-solid fa-pen input-icon"></i>
+                <input type="text" id="otherPurposeText" placeholder="Please specify your purpose">
+            </div>
+        </div>
+
+        <button id="confirmBtn" class="main-btn" onclick="bookRoom()">
+            Confirm Reservation
+        </button>
+        
+        <div style="text-align: center; margin-top: 25px; margin-bottom: 40px;">
+            <a href="manage.html" style="color: #64748b; font-size: 13px; text-decoration: underline;">
+                Manage / Cancel My Bookings
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script src="main.js"></script>
+
+<script>
+    // Show/Hide the "Other" text box
+    function toggleOtherPurpose() {
+        const purposeSelect = document.getElementById("purpose").value;
+        const otherContainer = document.getElementById("otherPurposeContainer");
+        if (purposeSelect === "Other") {
+            otherContainer.style.display = "block";
+        } else {
+            otherContainer.style.display = "none";
+        }
+    }
+
+    // Slideshow Logic
+    let slideIndex = 0;
+    showSlides();
+    function showSlides() {
+        let i;
+        let slides = document.getElementsByClassName("mySlides");
+        for (i = 0; i < slides.length; i++) { slides[i].style.display = "none"; }
+        slideIndex++;
+        if (slideIndex > slides.length) {slideIndex = 1}    
+        slides[slideIndex-1].style.display = "block";  
+        setTimeout(showSlides, 4000); 
+    }
+</script>
+
+</body>
+</html>

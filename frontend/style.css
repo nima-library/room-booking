@@ -273,3 +273,45 @@ input:focus, select:focus {
     .slideshow-container { height: 220px; }
     .main-wrapper { padding-top: 20px; }
 }
+
+/* --- OVERRIDES FOR NEW GREEN/RED LOGIC & FLOORS --- */
+
+/* 🟢 Available Slots/Rooms (Green Theme) */
+.slot-btn.free, .room-btn:not(.room-booked) {
+    border: 1px solid #28a745;
+    color: #28a745;
+    background: white;
+}
+.slot-btn.free:hover, .room-btn:not(.room-booked):hover {
+    background: #eafbf0;
+}
+
+/* 🟢 Selected Slots/Rooms (Solid Green) */
+.slot-btn.selected, .room-btn.selected {
+    background-color: #28a745 !important;
+    color: white !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+}
+
+/* 🔴 Booked/Full Slots/Rooms (Solid Red) */
+.slot-btn.booked, .room-btn.room-booked {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border-color: #dc3545 !important;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* Floor Section Headers inside the Room Grid */
+.floor-header {
+    grid-column: 1 / -1; /* Spans across all columns */
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--nirma-red);
+    border-bottom: 2px dashed #e2e8f0;
+    padding-bottom: 5px;
+    text-transform: uppercase;
+}

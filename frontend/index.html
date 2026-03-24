@@ -3,10 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discussion Room Booking | NIMA Knowledge Centre</title>
+    <title>NIMA Knowledge Centre | Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Base Styles */
+        body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; background-color: #f4f6f8; }
+        
+        /* 🔴 NIRMA HEADER */
+        .nirma-header {
+            background-color: #D32F2F;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1000;
+            height: 70px;
+        }
+        .header-content { display: flex; align-items: center; gap: 15px; }
+        .header-logo { height: 50px; background: white; padding: 2px; border-radius: 4px; }
+        .header-titles { display: flex; flex-direction: column; }
+        .header-titles h1 { font-size: 18px; margin: 0; text-transform: uppercase; font-weight: 700; line-height: 1.2; }
+        .header-titles h2 { font-size: 12px; margin: 0; font-weight: 400; opacity: 0.9; }
+
+        /* 🖼️ BACKGROUND & LOGIN CARD */
+        .landing-bg {
+            height: calc(100vh - 70px);
+            /* Using a high-quality library background */
+            background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), 
+                        url('https://upload.wikimedia.org/wikipedia/commons/e/e1/Duke_Humfrey%27s_Library_Interior_6%2C_Bodleian_Library%2C_Oxford%2C_UK_-_Diliff.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h2 { margin-top: 0; color: #1e2a4a; font-size: 22px; margin-bottom: 5px; }
+        .login-card p { color: #64748b; font-size: 14px; margin-bottom: 30px; }
+
+        /* BUTTONS */
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-student { background: white; color: #444; border: 2px solid #ddd; }
+        .btn-student:hover { background: #f8f9fa; border-color: #ccc; }
+        .btn-student img { width: 20px; }
+
+        .btn-staff { background: #34495e; color: white; }
+        .btn-staff:hover { background: #2c3e50; }
+
+        .btn-admin { background: #D32F2F; color: white; margin-bottom: 0; }
+        .btn-admin:hover { background: #b71c1c; }
+
+        @media (max-width: 600px) {
+            .header-titles h2 { display: none; }
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
 <body>
 
@@ -18,144 +101,70 @@
             <h2>Room Booking Portal</h2>
         </div>
     </div>
-    
-    <a href="admin.html" class="header-login-btn" title="Librarian Login">
-        <i class="fa-solid fa-user-lock"></i>
-        <span>Librarian Login</span>
-    </a>
 </header>
 
-<div class="slideshow-container">
-    <div class="mySlides fade">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Duke_Humfrey%27s_Library_Interior_6%2C_Bodleian_Library%2C_Oxford%2C_UK_-_Diliff.jpg" style="width:100%">
-    </div>
-    <div class="mySlides fade">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg/1280px-Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg" style="width:100%">
-    </div>
-    <div class="mySlides fade">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Library_of_Congress_Great_Hall_-_Jan_2006.jpg/1280px-Library_of_Congress_Great_Hall_-_Jan_2006.jpg" style="width:100%">
-    </div>
-</div>
+<div class="landing-bg">
+    <div class="login-card">
+        <h2>Welcome to Nima Library</h2>
+        <p>Please select your portal to continue</p>
 
-<div class="main-wrapper">
-    <div class="container">
-
-        <div class="form-intro">
-            <h3>Reserve Your Space</h3>
-            <p>Select your team details below.</p>
-        </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-users"></i> Group Details</h3>
-            <form id="bookingForm">
-                <div class="input-group">
-                    <i class="fa-solid fa-user-tie input-icon"></i>
-                    <input type="text" id="leaderName" placeholder="Leader Name" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-id-card input-icon"></i>
-                    <input type="text" id="rollNo" placeholder="Roll No (e.g. 21BCE001)" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-people-group input-icon"></i>
-                    <select id="groupSize" required>
-                        <option value="" disabled selected>Select Group Size</option>
-                        <option value="3">3 Students</option>
-                        <option value="4">4 Students</option>
-                        <option value="5">5 Students</option>
-                        <option value="6">6 Students</option>
-                    </select>
-                </div>
-            </form>
-        </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-users-rectangle"></i> Group Members</h3>
-            <div id="groupMembersContainer">
-                <p style="color:#888; text-align:center; font-size:13px;">Select group size above to add member details</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-graduation-cap"></i> Academic Details</h3>
-            <div class="input-group">
-                <i class="fa-solid fa-envelope input-icon"></i>
-                <input type="email" id="email" placeholder="Email Address" required>
-            </div>
-            <div class="input-group">
-                <i class="fa-solid fa-phone input-icon"></i>
-                <input type="tel" id="contactNo" placeholder="Contact Number" required>
-            </div>
-            <div class="input-group">
-                <i class="fa-solid fa-building-columns input-icon"></i>
-                <input type="text" id="institute" placeholder="Institute" required>
-            </div>
-            <div class="input-group">
-                <i class="fa-solid fa-code-branch input-icon"></i>
-                <input type="text" id="department" placeholder="Department" required>
-            </div>
-            <div class="input-group">
-                <i class="fa-solid fa-user-graduate input-icon"></i>
-                <input type="text" id="programme" placeholder="Programme" required>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-calendar-day"></i> Select Slot</h3>
-            <div class="input-group">
-                <i class="fa-solid fa-calendar-days input-icon"></i>
-                <input type="date" id="bookingDate" required>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; margin:15px 0 10px;">
-                <h4 style="margin:0; font-size:14px;">Available Time</h4>
-                <div style="font-size:12px; color:#666;">
-                    <i class="fa-solid fa-circle" style="color:white; border:1px solid #ccc;"></i> Free
-                    <i class="fa-solid fa-circle" style="color:#eee;"></i> Booked
-                </div>
-            </div>
-            <div class="slot-grid" id="slotGrid"></div>
-
-            <h4 style="margin:20px 0 10px; font-size:14px;">Available Room</h4>
-            <div class="room-grid" id="roomGrid"></div>
-
-            <div class="input-group" style="margin-top: 20px;">
-                <i class="fa-solid fa-bullseye input-icon"></i>
-                <select id="purpose" required>
-                    <option value="" disabled selected>Select Purpose</option>
-                    <option>Group Study</option>
-                    <option>Project Discussion</option>
-                    <option>Other</option>
-                </select>
-            </div>
-        </div>
-
-        <button id="confirmBtn" class="main-btn" onclick="bookRoom()">
-            Confirm Reservation
+        <button class="login-btn btn-student" onclick="studentLogin()">
+            <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google">
+            Student Login
         </button>
-        
-        <div style="text-align: center; margin-top: 25px; margin-bottom: 40px;">
-            <a href="manage.html" style="color: #64748b; font-size: 13px; text-decoration: underline;">
-                Manage / Cancel My Bookings
-            </a>
-        </div>
 
+        <button class="login-btn btn-staff" onclick="window.location.href='staff.html'">
+            <i class="fa-solid fa-user-tie"></i> Staff Login
+        </button>
+
+        <button class="login-btn btn-admin" onclick="window.location.href='admin.html'">
+            <i class="fa-solid fa-shield-halved"></i> Admin Login
+        </button>
     </div>
 </div>
-
-<script src="main.js"></script>
 
 <script>
-    let slideIndex = 0;
-    showSlides();
-    function showSlides() {
-        let i;
-        let slides = document.getElementsByClassName("mySlides");
-        for (i = 0; i < slides.length; i++) { slides[i].style.display = "none"; }
-        slideIndex++;
-        if (slideIndex > slides.length) {slideIndex = 1}    
-        slides[slideIndex-1].style.display = "block";  
-        setTimeout(showSlides, 4000); 
+    // ⚠️ CRITICAL: YOU MUST PASTE YOUR FIREBASE CONFIG HERE
+    // Get this from Firebase Console -> Project Settings -> General -> "Your apps"
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    // --- GOOGLE LOGIN LOGIC ---
+    function studentLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        
+        firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+            const userEmail = result.user.email;
+            
+            // STRICT DOMAIN CHECK
+            if (userEmail.endsWith("@nirmauni.ac.in")) {
+                // Success! Save email to local storage and go to booking form
+                localStorage.setItem("studentEmail", userEmail);
+                window.location.href = "booking.html";
+            } else {
+                // Not a Nirma email -> Log them out and show error
+                firebase.auth().signOut();
+                alert("⛔ Access Denied!\nYou must use your official @nirmauni.ac.in email address.");
+            }
+        })
+        .catch((error) => {
+            console.error("Login Failed:", error);
+            if (error.code !== 'auth/popup-closed-by-user') {
+                alert("Login failed. Please try again.");
+            }
+        });
     }
 </script>
 
