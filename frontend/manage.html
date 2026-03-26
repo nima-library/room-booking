@@ -3,94 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings | Nima Library</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>My Dashboard | NIMA Knowledge Centre</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<div class="main-wrapper">
-    <div class="container">
+    <style>
+        .dashboard-container { max-width: 600px; margin: 40px auto; width: 95%; }
+        .search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
         
-        <div class="header-section">
-            <h1><i class="fa-solid fa-list-check"></i> My Dashboard</h1>
-            <p class="subtitle">Check your reservation status</p>
-        </div>
+        .booking-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .booking-info h4 { margin: 0 0 5px 0; color: #1e2a4a; font-size: 16px; }
+        .booking-info p { margin: 0; font-size: 13px; color: #64748b; }
+        
+        .cancel-btn { background: #ffebee; color: #c0392b; border: 1px solid #c0392b; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; font-family: 'Poppins'; transition: 0.2s; }
+        .cancel-btn:hover { background: #c0392b; color: white; }
+        
+        .empty-state { text-align: center; padding: 20px; color: #64748b; font-size: 14px; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 14px; }
+        .back-link:hover { color: #D32F2F; }
+    </style>
+</head>
+<body style="background-color: #f4f6f8;">
 
-        <div class="card">
-            <h3><i class="fa-solid fa-magnifying-glass"></i> Find Your Bookings</h3>
-            <div class="input-group">
-                <i class="fa-solid fa-id-card input-icon"></i>
-                <input type="text" id="searchRollNo" placeholder="Enter Leader Roll Number">
-            </div>
-            <button class="main-btn" onclick="findBookings()">Check Status</button>
+<header class="nirma-header">
+    <div class="header-content">
+        <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Nirma_University_Logo.png" alt="Nirma Logo" class="header-logo">
+        <div class="header-titles">
+            <h1>NIMA KNOWLEDGE CENTRE</h1>
+            <h2>Room Booking Portal</h2>
         </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-calendar-check"></i> Active Bookings</h3>
-            <div id="resultsContainer">
-                <p style="text-align: center; color: #888; margin-top: 20px;">Enter your Roll Number to see details.</p>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="index.html" style="color: #666; text-decoration: none;">
-                <i class="fa-solid fa-arrow-left"></i> Back to Home
-            </a>
-        </div>
-
     </div>
+</header>
+
+<div class="dashboard-container">
+    <h2 style="color: #1e2a4a; margin-bottom: 5px;"><i class="fa-solid fa-list-check"></i> My Dashboard</h2>
+    <p style="color: #64748b; font-size: 14px; margin-top: 0; margin-bottom: 25px;">Logged in as: <strong id="userEmailDisplay" style="color: #D32F2F;">...</strong></p>
+
+    <div class="search-box" id="resultsArea">
+        <h3 style="font-size: 18px; margin-top: 0; color: #1e2a4a; margin-bottom: 20px;"><i class="fa-solid fa-calendar-check" style="color: #D32F2F;"></i> Your Active Bookings</h3>
+        <div id="bookingsList">
+            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading your reservations...</div>
+        </div>
+    </div>
+
+    <a href="booking.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
 </div>
 
 <script>
-    const BACKEND_URL = "https://nima-backend.vercel.app"; // ✅ CHECK THIS
-
-    async function findBookings() {
-        const rollNo = document.getElementById('searchRollNo').value.trim();
-        const container = document.getElementById('resultsContainer');
-
-        if (!rollNo) {
-            alert("Please enter a Roll Number");
+    const BACKEND_URL = "https://nima-backend.vercel.app"; 
+    
+    // Auto-Run when page opens
+    document.addEventListener('DOMContentLoaded', () => {
+        const studentEmail = localStorage.getItem("studentEmail");
+        
+        if (!studentEmail) {
+            alert("Session Expired. Please log in again.");
+            window.location.href = "index.html";
             return;
         }
 
-        container.innerHTML = `<p style="text-align:center;">Searching...</p>`;
+        document.getElementById("userEmailDisplay").innerText = studentEmail;
+        findMyBookings(studentEmail);
+    });
 
+    async function findMyBookings(email) {
+        const bookingsList = document.getElementById('bookingsList');
+        
         try {
-            const res = await fetch(`${BACKEND_URL}/my-bookings?roll_no=${rollNo}`);
+            // Ask backend for bookings using EMAIL instead of roll no
+            const res = await fetch(`${BACKEND_URL}/my-bookings?email=${email}`);
             const data = await res.json();
+            
+            bookingsList.innerHTML = "";
 
-            if (data.bookings && data.bookings.length > 0) {
-                container.innerHTML = ""; 
+            if (data.status === "success" && data.bookings && data.bookings.length > 0) {
+                // Sort by nearest date first
+                data.bookings.sort((a, b) => new Date(a.date) - new Date(b.date));
+
                 data.bookings.forEach(b => {
-                    const div = document.createElement('div');
-                    div.style.background = "#f8f9fa";
-                    div.style.padding = "15px";
-                    div.style.borderRadius = "8px";
-                    div.style.marginBottom = "10px";
-                    div.style.borderLeft = "5px solid #27ae60";
-                    
-                    div.innerHTML = `
-                        <h4 style="margin:0 0 5px 0;">${b.room_id}</h4>
-                        <p style="margin:0; font-size:14px; color:#555;">
-                            <i class="fa-regular fa-calendar"></i> ${b.date} &nbsp;|&nbsp; 
-                            <i class="fa-regular fa-clock"></i> ${b.time_slot}
-                        </p>
-                        <div style="margin-top:5px; font-size:12px; font-weight:bold; color:#27ae60;">
-                            <i class="fa-solid fa-circle-check"></i> Confirmed
+                    const card = document.createElement('div');
+                    card.className = "booking-card";
+                    card.innerHTML = `
+                        <div class="booking-info">
+                            <h4>${b.room_id}</h4>
+                            <p><i class="fa-regular fa-calendar"></i> ${b.date}</p>
+                            <p><i class="fa-regular fa-clock"></i> ${b.time_slot}</p>
                         </div>
+                        <button class="cancel-btn" onclick="cancelMyBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">
+                            Cancel
+                        </button>
                     `;
-                    container.appendChild(div);
+                    bookingsList.appendChild(card);
                 });
             } else {
-                container.innerHTML = `<p style="text-align:center; color:#888;">No bookings found for ${rollNo}</p>`;
+                bookingsList.innerHTML = `<div class="empty-state">You currently have no active reservations.</div>`;
             }
         } catch (err) {
-            console.error(err);
-            container.innerHTML = `<p style="text-align:center; color:red;">Error connecting to server.</p>`;
+            bookingsList.innerHTML = `<div class="empty-state" style="color: red;">❌ Failed to load bookings.</div>`;
+        }
+    }
+
+    async function cancelMyBooking(roomId, date, timeSlot) {
+        if (!confirm("Are you sure you want to cancel this reservation?")) return;
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/cancel-booking`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot })
+            });
+
+            const result = await res.json();
+            if (result.status === "success") {
+                alert("✅ Booking cancelled successfully!");
+                // Refresh the list automatically
+                findMyBookings(localStorage.getItem("studentEmail")); 
+            } else {
+                alert("❌ Error: " + result.message);
+            }
+        } catch (err) {
+            alert("❌ Failed to cancel booking.");
         }
     }
 </script>
+
 </body>
 </html>

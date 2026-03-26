@@ -1,10 +1,19 @@
 const BACKEND_URL = "https://nima-backend.vercel.app"; 
 
+// --- 1. INITIAL SETUP & GOOGLE EMAIL CHECK ---
 document.addEventListener('DOMContentLoaded', () => {
+    // 🔒 SECURITY: Auto-fill Google Email and lock it
+    const studentEmail = localStorage.getItem("studentEmail");
+    if (!studentEmail || !studentEmail.endsWith("@nirmauni.ac.in")) {
+        alert("Session Expired or Invalid. Please log in again.");
+        window.location.href = "index.html"; // Kick them back to login
+        return;
+    }
+    document.getElementById("email").value = studentEmail;
+
+    // Date Setup
     const dateInput = document.getElementById('bookingDate');
     const today = new Date();
-    
-    // Make sure we get the correct local date
     const localTodayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
     
     dateInput.min = localTodayStr; 
@@ -20,29 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('groupSize').addEventListener('change', updateMemberFields);
-
-    const instituteSelect = document.getElementById('institute');
-    instituteSelect.addEventListener('change', () => {
-        updateDepartmentOptions(instituteSelect.value);
-    });
-
-    const purposeSelect = document.getElementById('purpose');
-    const otherPurposeGroup = document.getElementById('otherPurposeGroup');
-    const customPurposeInput = document.getElementById('customPurpose');
-
-    purposeSelect.addEventListener('change', () => {
-        if (purposeSelect.value === 'Other') {
-            otherPurposeGroup.style.display = 'flex';
-            customPurposeInput.required = true;
-        } else {
-            otherPurposeGroup.style.display = 'none';
-            customPurposeInput.required = false;
-            customPurposeInput.value = '';
-        }
-    });
-
-    // initialize empty department options
-    updateDepartmentOptions(instituteSelect.value);
 });
 
 let selectedSlot = null;
@@ -54,28 +40,48 @@ const ROOMS = [
     "Room 601", "Room 602", "Room 701", "Room 702", "Room 801", "Room 802"
 ];
 
+// 📅 HOLIDAY & WEEKEND CHECKER
+function isHoliday(dateObj) {
+    const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Rule: 2nd & 4th Saturdays are closed
+    if (dayOfWeek === 6) {
+        const date = dateObj.getDate();
+        const isSecondSat = date > 7 && date <= 14;
+        const isFourthSat = date > 21 && date <= 28;
+        if (isSecondSat || isFourthSat) return true;
+    }
+
+    return false;
+}
+
 async function fetchBookedSlots(dateStr) {
     try {
         const res = await fetch(`${BACKEND_URL}/get-bookings?date=${dateStr}`);
         const data = await res.json();
 
         if (data.status === "closed") {
-            alert(`⛔ LIBRARY CLOSED: ${data.reason}`);
-            // Completely lock the UI
-            const grid = document.getElementById('slotGrid');
-            grid.innerHTML = "";
-            const times = ["09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM", "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM"];
-            times.forEach(t => {
-                grid.innerHTML += `<div class="slot-btn booked">${t}<br><small style="color:red; font-size:10px;">CLOSED</small></div>`;
-            });
-            document.getElementById('roomGrid').innerHTML = "<p style='color:red; text-align:center;'>Library Closed</p>";
+            showClosedLibrary(`⛔ LIBRARY CLOSED: ${data.reason}`);
             return; 
+        }
+
+        const selectedDateObj = new Date(dateStr);
+        if (isHoliday(selectedDateObj)) {
+            showClosedLibrary(`⛔ CLOSED: Public Holiday / 2nd or 4th Saturday`);
+            return;
         }
 
         currentBookings = data.bookings || [];
         updateSlotAvailability(dateStr); 
 
     } catch (err) { console.error("Error:", err); }
+}
+
+function showClosedLibrary(message) {
+    alert(message);
+    const grid = document.getElementById('slotGrid');
+    grid.innerHTML = "";
+    document.getElementById('roomGrid').innerHTML = "<p style='color:red; text-align:center;'>Library Closed</p>";
 }
 
 function selectSlot(element, time) {
@@ -87,22 +93,36 @@ function selectSlot(element, time) {
     showAvailableRooms(time);
 }
 
+// --- 🏨 COMPLEX ROOM RULES ---
 function showAvailableRooms(slotTime) {
     const roomGrid = document.getElementById('roomGrid');
     roomGrid.innerHTML = ""; 
 
-    ROOMS.forEach(room => {
+    const selectedDateObj = new Date(document.getElementById('bookingDate').value);
+    const dayOfWeek = selectedDateObj.getDay();
+    const startHour = getStartHour(slotTime);
+
+    let allowedRooms = [...ROOMS];
+
+    // Rule: Sundays ONLY 5th Floor
+    if (dayOfWeek === 0) {
+        allowedRooms = ROOMS.filter(r => r.includes("50"));
+    }
+    // Rule: Working Saturdays AFTER 1:30 PM (2:00 PM slot onwards) ONLY 5th & 6th Floor
+    if (dayOfWeek === 6 && startHour >= 14) {
+        allowedRooms = ROOMS.filter(r => r.includes("50") || r.includes("60"));
+    }
+
+    if (allowedRooms.length === 0) {
+        roomGrid.innerHTML = "<p style='color:red; font-size:13px;'>No floors available at this time.</p>";
+        return;
+    }
+
+    allowedRooms.forEach(room => {
         const isBooked = currentBookings.some(b => b.time_slot === slotTime && b.room_id === room);
         const btn = document.createElement('button');
         btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
-        const match = room.match(/^(?:Room\s*)(\d{3})$/i);
-        let label = room;
-        if (match) {
-            const roomNumber = match[1];
-            const floor = roomNumber.charAt(0);
-            label = `Floor ${floor} Room ${roomNumber}`;
-        }
-        btn.innerText = label;
+        btn.innerText = room; 
         btn.disabled = isBooked;
 
         if (!isBooked) {
@@ -116,70 +136,67 @@ function showAvailableRooms(slotTime) {
     });
 }
 
-// ✅ REWRITTEN TO FIX THE "ALL EXPIRED" BUG
+// --- ⏱️ COMPLEX TIMING RULES ---
 function updateSlotAvailability(selectedDateStr) {
     const grid = document.getElementById('slotGrid');
-    grid.innerHTML = ""; // Wipe everything clean first to prevent caching issues
-    document.getElementById('roomGrid').innerHTML = ""; // Clear rooms
+    grid.innerHTML = ""; 
+    document.getElementById('roomGrid').innerHTML = ""; 
 
+    // ✅ Added 8-9 AM and 5-6 PM
     const times = [
-        "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM",
-        "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM",
-        "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM"
+        "08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM",
+        "11:00 AM - 12:00 PM", "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM",
+        "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM",
+        "05:00 PM - 06:00 PM"
     ];
 
     const now = new Date();
     const localTodayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     const currentHour = now.getHours();
 
-    // Count how many rooms are booked per slot
+    const selectedDateObj = new Date(selectedDateStr);
+    const dayOfWeek = selectedDateObj.getDay();
+
     const slotCounts = {};
-    currentBookings.forEach(b => {
-        slotCounts[b.time_slot] = (slotCounts[b.time_slot] || 0) + 1;
-    });
+    currentBookings.forEach(b => { slotCounts[b.time_slot] = (slotCounts[b.time_slot] || 0) + 1; });
 
     times.forEach(timeText => {
         const btn = document.createElement('div');
         btn.className = 'slot-btn free';
         btn.innerHTML = timeText;
         btn.onclick = () => selectSlot(btn, timeText);
+        
+        const startHour = getStartHour(timeText);
 
-        // 1. If user somehow selects a PAST date
-        if (selectedDateStr < localTodayStr) {
+        // Rule: Sundays ONLY 10 AM to 4 PM
+        if (dayOfWeek === 0 && (startHour < 10 || startHour >= 16)) {
+            btn.className = 'slot-btn booked';
+            btn.onclick = null;
+            btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">CLOSED</small>`;
+        }
+        // Past Dates
+        else if (selectedDateStr < localTodayStr) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
         } 
-        // 2. If user is looking at TODAY
-        else if (selectedDateStr === localTodayStr) {
-            const startHour = getStartHour(timeText);
-            
-            // Check if the time has already passed
-            if (startHour <= currentHour) {
-                btn.className = 'slot-btn booked';
-                btn.onclick = null;
-                btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
-            } 
-            // Check if it's full (all 13 rooms taken)
-            else if (slotCounts[timeText] >= 13) {
-                btn.className = 'slot-btn booked';
-                btn.onclick = null;
-                btn.innerHTML = `${timeText}<br><small style="color:red; font-size:10px;">FULL</small>`;
-            }
+        // Today's Past Hours
+        else if (selectedDateStr === localTodayStr && startHour <= currentHour) {
+            btn.className = 'slot-btn booked';
+            btn.onclick = null;
+            btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
         } 
-        // 3. If user is looking at a FUTURE date
-        else {
-            if (slotCounts[timeText] >= 13) {
-                btn.className = 'slot-btn booked';
-                btn.onclick = null;
-                btn.innerHTML = `${timeText}<br><small style="color:red; font-size:10px;">FULL</small>`;
-            }
+        // Full Slots
+        else if (slotCounts[timeText] >= ROOMS.length) {
+            btn.className = 'slot-btn booked';
+            btn.onclick = null;
+            btn.innerHTML = `${timeText}<br><small style="color:red; font-size:10px;">FULL</small>`;
         }
+        
         grid.appendChild(btn);
     });
 }
 
-// Converts "09:00 AM" -> 9, "01:00 PM" -> 13
 function getStartHour(timeString) {
     const parts = timeString.split(' - ')[0]; 
     let hour = parseInt(parts.split(':')[0]); 
@@ -208,85 +225,60 @@ function updateMemberFields() {
     }
 }
 
-function updateDepartmentOptions(instituteCode) {
-    const map = {
-        IAPNU: ["B.Arch", "M.plan", "Ph.D."],
-        ICNU: ["B.com (Hons.)"],
-        IDNU: ["BDes (Product and Interaction design)", "Bdes (Communication design)"],
-        ILNU: ["B.A. + LL.B.(Hons.)", "B.Com. + LL.B.(Hons.)", "B.B.A. + LL.B.(Hons.)", "LL.M. (One year)"],
-        IMNU: ["MBA", "MBA(HRM)", "MBA(Family Business and Entrepreneurship)", "Integrated BBA-MBA", "BBA(Hons.)", "Integrated Btech(Computer Science & engg) + MBA", "Integrated Btech(Mechanical engg) + MBA"],
-        IPNU: ["Pharmaceutics", "Pharmaceutical Chemistry", "Pharmaceutical Analysis", "Pharmacology", "Pharmacognosy"],
-        ISNU: ["Msc in Biotechnology", "Msc in Microbiology"],
-        ITNU: ["Mechanical", "Civil", "Chemical", "Computer Science and Engineering", "Electronics & Communications", "Electronics and Instrumentation", "Mathematics", "Humanities and Social Sciences"],
-        FDSR: ["Faculty of Doctoral Studies"],
-        "International Study": ["Bs (2+2)"]
-    };
-    const departmentSelect = document.getElementById('department');
-    departmentSelect.innerHTML = '<option value="" disabled selected>Select Department</option>';
-
-    const options = map[instituteCode] || [];
-    options.forEach(dep => {
-        const option = document.createElement('option');
-        option.value = dep;
-        option.innerText = dep;
-        departmentSelect.appendChild(option);
-    });
-}
-
 async function bookRoom() {
-    if (!selectedSlot || !selectedRoom) return alert("Please select a Time Slot and a Room.");
+    if (!selectedSlot || !selectedRoom) return alert("⚠️ Please select a Time Slot and a Room.");
     
+    // Validate inputs
     const leaderName = document.getElementById('leaderName').value;
     const rollNo = document.getElementById('rollNo').value;
-    const email = document.getElementById('email').value;
+    const email = document.getElementById('email').value; 
+    const dateStr = document.getElementById('bookingDate').value;
+    const purposeSelect = document.getElementById('purpose').value;
+    const contactNo = document.getElementById('contactNo').value;
     const institute = document.getElementById('institute').value;
     const department = document.getElementById('department').value;
-    const dateStr = document.getElementById('bookingDate').value;
-    let purpose = document.getElementById('purpose').value;
-    const customPurpose = document.getElementById('customPurpose').value.trim();
+    const programme = document.getElementById('programme').value;
+    const groupSize = document.getElementById('groupSize').value;
 
-    if (purpose === 'Other') {
-        purpose = customPurpose;
+    let finalPurpose = purposeSelect;
+    if (purposeSelect === "Other") {
+        finalPurpose = document.getElementById('otherPurposeText').value;
+        if (!finalPurpose) return alert("⚠️ Please specify your 'Other' purpose.");
     }
 
-    if (!leaderName || !rollNo || !email || !institute || !department || !purpose) return alert("⚠️ Please fill in all details.");
-
-    const emailRegex = /^[0-9]{2}[a-zA-Z]{3}[0-9]{3}@nirmauni\.ac\.in$/;
-    if (!emailRegex.test(email)) {
-        alert("Invalid email. Please enter a valid Nirma Uni student email in format: 21ABC001@nirmauni.ac.in");
-        const emailInput = document.getElementById('email');
-        emailInput.focus();
-        emailInput.select();
-        return;
+    if (!leaderName || !rollNo || !email || !finalPurpose || !contactNo || !institute || !department || !programme || !groupSize) {
+        return alert("⚠️ Please fill in all details, including dropdown selections.");
     }
 
+    // ✅ STRICT VALIDATION: Ensure all group members are filled out
     const members = [];
-    let missingMemberInfo = false;
-    let missingMemberIndex = -1;
-
-    document.querySelectorAll('.member-input-block').forEach((block, idx) => {
-        const memName = block.querySelector('.mem-name').value.trim();
-        const memRoll = block.querySelector('.mem-roll').value.trim();
-
-        if (!memName || !memRoll) {
-            missingMemberInfo = true;
-            missingMemberIndex = idx + 2; // because the leader is member 1
-        }
-
-        members.push({ name: memName, roll: memRoll });
+    let missingMemberData = false;
+    document.querySelectorAll('.member-input-block').forEach(block => {
+        const mName = block.querySelector('.mem-name').value.trim();
+        const mRoll = block.querySelector('.mem-roll').value.trim();
+        if (!mName || !mRoll) missingMemberData = true;
+        members.push({ name: mName, roll: mRoll });
     });
 
-    if (missingMemberInfo) {
-        alert(`⚠️ Please fill in all details for member #${missingMemberIndex}.`);
-        const block = document.querySelectorAll('.member-input-block')[missingMemberIndex - 2];
-        if (block) {
-            const firstEmpty = !block.querySelector('.mem-name').value.trim() ? block.querySelector('.mem-name') : block.querySelector('.mem-roll');
-            if (firstEmpty) firstEmpty.focus();
-        }
-        return;
+    if (missingMemberData) {
+        return alert("⚠️ Please fill in the details for all Group Members.");
     }
 
-    const bookingData = { room_id: selectedRoom, date: dateStr, time_slot: selectedSlot, leader_name: leaderName, leader_roll_no: rollNo, email: email, institute: institute, department: department, group_size: document.getElementById('groupSize').value, members: members, purpose: purpose };
+    const bookingData = { 
+        room_id: selectedRoom, 
+        date: dateStr, 
+        time_slot: selectedSlot, 
+        leader_name: leaderName, 
+        leader_roll_no: rollNo, 
+        email: email, 
+        contact_no: contactNo,
+        institute: institute,
+        department: department,
+        programme: programme,
+        group_size: groupSize, 
+        members: members, 
+        purpose: finalPurpose 
+    };
 
     const btn = document.getElementById('confirmBtn');
     const originalText = btn.innerHTML;
@@ -296,16 +288,18 @@ async function bookRoom() {
     try {
         const res = await fetch(`${BACKEND_URL}/confirm-booking`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookingData) });
         const result = await res.json();
+        
         if (result.status === 'success') {
+            alert("✅ Booking Confirmed Successfully!\n\nReminder: Please arrive 5 minutes early to your assigned room.");
             localStorage.setItem("bookingReceipt", JSON.stringify(bookingData));
             window.location.href = "success.html"; 
         } else {
-            alert("Error: " + result.message);
+            alert("❌ Error: " + result.message);
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     } catch (err) {
-        alert("Failed to connect to server.");
+        alert("❌ Failed to connect to server.");
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
