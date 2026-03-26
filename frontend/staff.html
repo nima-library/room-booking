@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard | Nima Library</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .staff-header { background: linear-gradient(135deg, #34495e, #2c3e50); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; }
+        .booking-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        .booking-table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; }
+        .booking-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .delete-btn { background: #ffebee; color: #c0392b; border: 1px solid #c0392b; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .delete-btn:hover { background: #c0392b; color: white; }
+        
+        /* Login Overlay for Staff */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.95); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; width: 320px; position: relative; }
+        .login-box input, .login-box select { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; box-sizing: border-box; font-family: 'Poppins';}
+        .close-login-btn { position: absolute; top: 15px; right: 15px; color: #999; font-size: 20px; text-decoration: none; cursor: pointer; }
+        .close-login-btn:hover { color: #c0392b; }
+    </style>
+</head>
+<body style="background-color: #f4f6f8;">
+
+<div id="loginOverlay">
+    <div class="login-box">
+        <a href="index.html" class="close-login-btn" title="Back to Home"><i class="fa-solid fa-xmark"></i></a>
+        <i class="fa-solid fa-user-tie" style="font-size: 40px; color: #34495e; margin-bottom: 15px;"></i>
+        <h2>Staff Login</h2>
+        
+        <select id="staffFloor">
+            <option value="" disabled selected>Select Your Floor</option>
+            <option value="5">5th Floor</option>
+            <option value="6">6th Floor</option>
+            <option value="7">7th Floor</option>
+            <option value="8">8th Floor</option>
+        </select>
+        
+        <input type="password" id="staffPass" placeholder="Enter Staff Password (staff123)">
+        <button class="main-btn" style="background: #34495e;" onclick="checkStaffLogin()">Access Floor</button>
+    </div>
+</div>
+
+<div class="main-wrapper">
+    <div class="container" style="max-width: 1000px;">
+        
+        <div class="staff-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1><i class="fa-solid fa-layer-group"></i> Floor <span id="displayFloor">X</span> Dashboard</h1>
+                    <p style="margin:0; opacity: 0.9;">Manage active bookings for your assigned rooms</p>
+                </div>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="location.reload()">Logout</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0;"><i class="fa-solid fa-list-check"></i> Today's Bookings</h3>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 14px; background: #34495e;" onclick="loadFloorBookings()">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="booking-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Room</th>
+                            <th>Booked By</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffTableBody">
+                        <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const BACKEND_URL = "https://nima-backend.vercel.app"; 
+    let myFloor = ""; // Stores the floor the staff member selected
+
+    // 1. LOGIN LOGIC
+    function checkStaffLogin() {
+        const pass = document.getElementById("staffPass").value;
+        const floor = document.getElementById("staffFloor").value;
+        
+        if (!floor) return alert("Please select your floor.");
+        
+        // Hardcoded password for staff to match the client request easily
+        if (pass === "staff123") {
+            myFloor = floor;
+            document.getElementById("displayFloor").innerText = myFloor;
+            document.getElementById("loginOverlay").style.display = "none";
+            loadFloorBookings();
+        } else {
+            alert("❌ Wrong Password");
+        }
+    }
+
+    // 2. LOAD & FILTER DATA
+    async function loadFloorBookings() {
+        const tbody = document.getElementById("staffTableBody");
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/all-bookings`);
+            const data = await res.json();
+            tbody.innerHTML = ""; 
+            
+            if (data.bookings && data.bookings.length > 0) {
+                // FILTER: Only keep bookings where the room number starts with the selected floor
+                const floorBookings = data.bookings.filter(b => b.room_id.replace("Room ", "").startsWith(myFloor));
+                
+                // Sort by Date
+                floorBookings.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                if (floorBookings.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No bookings found for Floor ${myFloor}.</td></tr>`;
+                    return;
+                }
+
+                floorBookings.forEach(b => {
+                    if (b.leader === "ADMIN BLOCK" || b.leader === "MAINTENANCE") return; // Staff don't see admin blocks
+
+                    const nameDisplay = `<strong>${b.leader}</strong><br><span style="font-size:12px; color:#888;">${b.roll_no}</span>`;
+                    const row = `
+                        <tr>
+                            <td>${b.date}</td><td>${b.time_slot}</td><td><strong>${b.room_id}</strong></td><td>${nameDisplay}</td>
+                            <td><button class="delete-btn" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')"><i class="fa-solid fa-xmark"></i> Cancel</button></td>
+                        </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } else { 
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No bookings found.</td></tr>`; 
+            }
+        } catch (err) { 
+            console.error(err); 
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data.</td></tr>`; 
+        }
+    }
+
+    // 3. CANCEL BOOKING
+    async function deleteBooking(roomId, date, timeSlot) {
+        if (!confirm(`Are you sure you want to cancel this booking? An email will be sent to the student.`)) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/cancel-booking`, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) 
+            });
+            const result = await res.json();
+            if (result.status === "success") { 
+                alert("Booking Cancelled Successfully."); 
+                loadFloorBookings(); 
+            } else { 
+                alert("Error: " + result.message); 
+            }
+        } catch (err) { alert("Failed to connect to server."); }
+    }
+</script>
+</body>
+</html>g
