@@ -67,12 +67,32 @@
 </div>
 
 <script>
-    // Paste your Firebase Config here later!
+    // ✅ YOUR REAL FIREBASE KEYS
+    const firebaseConfig = {
+        apiKey: "AIzaSyBM7-ufYhqO5Uo2PpM-4x_R0sRMCVnQqPE",
+        authDomain: "nimalibrary-cbceb.firebaseapp.com",
+        databaseURL: "https://nimalibrary-cbceb-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "nimalibrary-cbceb",
+        storageBucket: "nimalibrary-cbceb.firebasestorage.app",
+        messagingSenderId: "480609468196",
+        appId: "1:480609468196:web:5281f1507baaa4780b3db1",
+        measurementId: "G-67XY9ZF713"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    // --- GOOGLE LOGIN LOGIC ---
     function studentLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
+        
         firebase.auth().signInWithPopup(provider)
         .then((result) => {
             const userEmail = result.user.email;
+            
+            // STRICT DOMAIN CHECK
             if (userEmail.endsWith("@nirmauni.ac.in")) {
                 localStorage.setItem("studentEmail", userEmail);
                 window.location.href = "booking.html";
@@ -81,7 +101,12 @@
                 alert("⛔ Access Denied!\nYou must use your official @nirmauni.ac.in email address.");
             }
         })
-        .catch((error) => { if (error.code !== 'auth/popup-closed-by-user') alert("Login failed."); });
+        .catch((error) => {
+            console.error("Login Failed:", error);
+            if (error.code !== 'auth/popup-closed-by-user') {
+                alert("Login failed. Check console for details.");
+            }
+        });
     }
 </script>
 
