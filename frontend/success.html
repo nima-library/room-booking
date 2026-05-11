@@ -82,11 +82,10 @@
 
 <script>
     // 1. Get Data from Memory
-    const rawData = localStorage.getItem("bookingReceipt");
+    const rawData = localStorage.getItem("bookingData");
 
     if (rawData) {
         try {
-            // ✅ THE FIX: Corrected JSON.parse
             const info = JSON.parse(rawData);
 
             // 2. Fill the receipt
@@ -94,7 +93,11 @@
             document.getElementById("dispRoll").textContent = info.leader_roll_no || "N/A";
             document.getElementById("dispDate").textContent = info.date || "N/A";
             document.getElementById("dispTime").textContent = info.time_slot || "N/A";
-            document.getElementById("dispRoom").textContent = info.room_id || "N/A";
+            
+            const roomVal = info.room_id || "N/A";
+            const roomNum = roomVal.replace("Room ", "");
+            const floorNum = roomNum.charAt(0);
+            document.getElementById("dispRoom").textContent = roomVal !== "N/A" ? `${floorNum}th Floor ${roomNum}` : "N/A";
             
         } catch (e) {
             console.error("Error parsing booking data", e);
