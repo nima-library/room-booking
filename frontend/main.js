@@ -122,7 +122,9 @@ function showAvailableRooms(slotTime) {
         const isBooked = currentBookings.some(b => b.time_slot === slotTime && b.room_id === room);
         const btn = document.createElement('button');
         btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
-        btn.innerText = room; 
+        const roomNum = room.replace("Room ", "");
+        const floorNum = roomNum.charAt(0);
+        btn.innerText = `${floorNum}th Floor ${roomNum}`; 
         btn.disabled = isBooked;
 
         if (!isBooked) {
