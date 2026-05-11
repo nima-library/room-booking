@@ -14,7 +14,8 @@
         .header-content { display: flex; align-items: center; gap: 15px; }
         .header-logo { height: 50px; background: white; padding: 2px; border-radius: 4px; }
         .header-titles { display: flex; flex-direction: column; }
-        .header-titles h1 { font-size: 18px; margin: 0; text-transform: uppercase; font-weight: 700; line-height: 1.2; }
+        /* ✅ Changed to NIMA Knowledge Centre */
+        .header-titles h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
         .header-titles h2 { font-size: 12px; margin: 0; font-weight: 400; opacity: 0.9; }
 
         .landing-bg { height: calc(100vh - 70px); background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), url('https://upload.wikimedia.org/wikipedia/commons/e/e1/Duke_Humfrey%27s_Library_Interior_6%2C_Bodleian_Library%2C_Oxford%2C_UK_-_Diliff.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
@@ -42,7 +43,7 @@
     <div class="header-content">
         <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Nirma_University_Logo.png" alt="Nirma Logo" class="header-logo">
         <div class="header-titles">
-            <h1>NIMA KNOWLEDGE CENTRE</h1>
+            <h1>NIMA Knowledge Centre</h1>
             <h2>Room Booking Portal</h2>
         </div>
     </div>
@@ -67,7 +68,6 @@
 </div>
 
 <script>
-    // ✅ YOUR REAL FIREBASE KEYS
     const firebaseConfig = {
         apiKey: "AIzaSyBM7-ufYhqO5Uo2PpM-4x_R0sRMCVnQqPE",
         authDomain: "nimalibrary-cbceb.firebaseapp.com",
@@ -79,12 +79,10 @@
         measurementId: "G-67XY9ZF713"
     };
 
-    // Initialize Firebase
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
 
-    // --- GOOGLE LOGIN LOGIC ---
     function studentLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
         
@@ -92,7 +90,6 @@
         .then((result) => {
             const userEmail = result.user.email;
             
-            // STRICT DOMAIN CHECK
             if (userEmail.endsWith("@nirmauni.ac.in")) {
                 localStorage.setItem("studentEmail", userEmail);
                 window.location.href = "booking.html";
