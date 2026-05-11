@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('groupSize').addEventListener('change', updateMemberFields);
-    document.getElementById('institute').addEventListener('change', updateDepartmentOptions);
 });
 
 let selectedSlot = null;
@@ -40,48 +39,6 @@ const ROOMS = [
     "Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507",
     "Room 601", "Room 602", "Room 701", "Room 702", "Room 801", "Room 802"
 ];
-
-const instituteDepartments = {
-    IMNU: ["MBA", "BBA (Hons)", "BBA-MBA", "B.Tech (Computer Science)", "B.Tech (Mechanical Engineering)"],
-    ITNU: ["Mechanical", "Civil", "Chemical", "Electrical", "Computer Science & Engineering", "Electronics & Communications", "Electronics & Instrumentation", "Mathematics", "Humanities & Social Sciences"],
-    IPNU: ["Pharmaceutics", "Pharmaceutical Chemistry", "Pharmaceutical Analysis", "Pharmacology", "Pharmacognosy"],
-    ILNU: ["B.A LL.B.", "B.Com LL.B.", "B.B.A LL.B.", "LL.M."],
-    ISNU: ["M.Sc Biotechnology", "M.Sc Microbiology"],
-    IAPNU: ["B.Arch", "M.Plan", "Ph.D"],
-    ICNU: ["B.Com (Hons.)"],
-    IISNU: ["BS (2+2)"],
-    IDNU: ["B.Des (Product & Interaction Design)", "B.Des (Communication Design)"],
-    FDSR: []
-};
-
-function updateDepartmentOptions() {
-    const institute = document.getElementById('institute').value;
-    const deptSelect = document.getElementById('department');
-    const departments = instituteDepartments[institute] || [];
-
-    // Clear existing options and reset to placeholder
-    deptSelect.innerHTML = '<option value="" disabled selected>Select Department</option>';
-
-    if (institute === "FDSR") {
-        const opt = document.createElement('option');
-        opt.value = "";
-        opt.textContent = "No options available";
-        opt.disabled = true;
-        deptSelect.appendChild(opt);
-    } else if (institute) {
-        departments.forEach(dept => {
-            const opt = document.createElement('option');
-            opt.value = dept;
-            opt.textContent = dept;
-            deptSelect.appendChild(opt);
-        });
-        // Maintain the "Other" option for general flexibility
-        const otherOpt = document.createElement('option');
-        otherOpt.value = "Other";
-        otherOpt.textContent = "Other";
-        deptSelect.appendChild(otherOpt);
-    }
-}
 
 // 📅 HOLIDAY & WEEKEND CHECKER
 function isHoliday(dateObj) {
@@ -279,7 +236,6 @@ async function bookRoom() {
     const purposeSelect = document.getElementById('purpose').value;
     const contactNo = document.getElementById('contactNo').value;
     const institute = document.getElementById('institute').value;
-    const department = document.getElementById('department').value;
     const programme = document.getElementById('programme').value;
     const groupSize = document.getElementById('groupSize').value;
 
@@ -289,7 +245,7 @@ async function bookRoom() {
         if (!finalPurpose) return alert("⚠️ Please specify your 'Other' purpose.");
     }
 
-    if (!leaderName || !rollNo || !email || !finalPurpose || !contactNo || !institute || !department || !programme || !groupSize) {
+    if (!leaderName || !rollNo || !email || !finalPurpose || !contactNo || !institute || !programme || !groupSize) {
         return alert("⚠️ Please fill in all details, including dropdown selections.");
     }
 
@@ -316,7 +272,6 @@ async function bookRoom() {
         email: email, 
         contact_no: contactNo,
         institute: institute,
-        department: department,
         programme: programme,
         group_size: groupSize, 
         members: members, 
