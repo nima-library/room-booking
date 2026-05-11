@@ -15,8 +15,8 @@ ADMIN_PASSWORD = "admin123"
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SENDER_EMAIL = "pvtanany@gmail.com"  
-SENDER_PASSWORD = "ahwodhkibllbpypr" 
+SENDER_EMAIL = "noreply.roombooking@nirmauni.ac.in"  
+SENDER_PASSWORD = "rgnwarylovvaxijz" 
 
 # --- HELPER: EMAIL FUNCTIONS ---
 def send_confirmation_email(to_email, booking_data, token):
