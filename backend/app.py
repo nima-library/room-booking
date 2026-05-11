@@ -215,7 +215,15 @@ def get_bookings():
 def my_bookings():
     try:
         roll_no = request.args.get('roll_no')
-        docs = db.collection('daily_slots').where('details.leader_roll_no', '==', roll_no).stream()
+        email = request.args.get('email')
+
+        if email:
+            docs = db.collection('daily_slots').where('details.email', '==', email).stream()
+        elif roll_no:
+            docs = db.collection('daily_slots').where('details.leader_roll_no', '==', roll_no).stream()
+        else:
+            return jsonify({"status": "error", "message": "Email or Roll No required"}), 400
+
         bookings = [{"room_id": d.to_dict().get('room_id'), "date": d.to_dict().get('date'), "time_slot": d.to_dict().get('time_slot')} for d in docs]
         return jsonify({"status": "success", "bookings": bookings}), 200
     except Exception as e: return jsonify({"error": str(e)}), 500
@@ -238,8 +246,7 @@ def all_bookings():
             "time_slot": d.get('time_slot'), 
             "leader": details.get('leader_name', 'Unknown'), 
             "roll_no": details.get('leader_roll_no', 'N/A'),
-            "institute": details.get('institute', 'N/A'), # Added for reports
-            "department": details.get('department', 'N/A') # Added for reports
+            "institute": details.get('institute', 'N/A') # Added for reports
         })
     return jsonify({"bookings": data}), 200
 

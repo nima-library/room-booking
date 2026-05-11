@@ -291,7 +291,7 @@ async function bookRoom() {
         
         if (result.status === 'success') {
             alert("✅ Booking Confirmed Successfully!\n\nReminder: Please arrive 5 minutes early to your assigned room.");
-            localStorage.setItem("bookingReceipt", JSON.stringify(bookingData));
+            localStorage.setItem("bookingData", JSON.stringify(bookingData));
             window.location.href = "success.html"; 
         } else {
             alert("❌ Error: " + result.message);

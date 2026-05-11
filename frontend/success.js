@@ -2,7 +2,7 @@ const booking = JSON.parse(localStorage.getItem("bookingData"));
 const detailsDiv = document.getElementById("bookingDetails");
 const cancelBtn = document.getElementById("cancelBtn");
 
-const BACKEND_URL = "https://nimalibrary.onrender.com";
+const BACKEND_URL = "https://nima-backend.vercel.app";
 
 // ---- show booking details ----
 detailsDiv.innerHTML = `
