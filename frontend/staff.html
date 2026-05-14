@@ -15,7 +15,6 @@
         .delete-btn { background: #ffebee; color: #c0392b; border: 1px solid #c0392b; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
         .delete-btn:hover { background: #c0392b; color: white; }
         
-        /* Login Overlay for Staff */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.95); z-index: 999; display: flex; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; width: 320px; position: relative; }
         .login-box input, .login-box select { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; box-sizing: border-box; font-family: 'Poppins';}
@@ -43,16 +42,6 @@
         <button class="main-btn" style="background: #34495e;" onclick="checkStaffLogin()">Access Floor</button>
     </div>
 </div>
-
-<header class="nirma-header">
-    <div class="header-content">
-        <img src="images/nimalogo.jpg" alt="NIMA Logo" class="header-logo">
-        <div class="header-titles">
-            <h1>NIMA KNOWLEDGE CENTRE</h1>
-            <h2>Room Booking Portal</h2>
-        </div>
-    </div>
-</header>
 
 <div class="main-wrapper">
     <div class="container" style="max-width: 1000px;">
@@ -98,16 +87,14 @@
 
 <script>
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
-    let myFloor = ""; // Stores the floor the staff member selected
+    let myFloor = ""; 
 
-    // 1. LOGIN LOGIC
     function checkStaffLogin() {
         const pass = document.getElementById("staffPass").value;
         const floor = document.getElementById("staffFloor").value;
         
         if (!floor) return alert("Please select your floor.");
         
-        // Hardcoded password for staff to match the client request easily
         if (pass === "staff123") {
             myFloor = floor;
             document.getElementById("displayFloor").innerText = myFloor;
@@ -118,7 +105,6 @@
         }
     }
 
-    // 2. LOAD & FILTER DATA
     async function loadFloorBookings() {
         const tbody = document.getElementById("staffTableBody");
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
@@ -128,10 +114,8 @@
             tbody.innerHTML = ""; 
             
             if (data.bookings && data.bookings.length > 0) {
-                // FILTER: Only keep bookings where the room number starts with the selected floor
                 const floorBookings = data.bookings.filter(b => b.room_id.replace("Room ", "").startsWith(myFloor));
                 
-                // Sort by Date
                 floorBookings.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
                 if (floorBookings.length === 0) {
@@ -140,9 +124,13 @@
                 }
 
                 floorBookings.forEach(b => {
-                    if (b.leader === "ADMIN BLOCK" || b.leader === "MAINTENANCE") return; // Staff don't see admin blocks
+                    // Pull Leader and Roll explicitly
+                    let lName = b.leader || b.leader_name || "N/A";
+                    let lRoll = b.roll_no || b.leader_roll_no || "N/A";
+                    if (lName === "ADMIN BLOCK" || lName === "MAINTENANCE") return; 
 
-                    const nameDisplay = `<strong>${b.leader}</strong><br><span style="font-size:12px; color:#888;">${b.roll_no}</span>`;
+                    // ✅ Added Leader Name and Roll here
+                    const nameDisplay = `<strong>${lName}</strong><br><span style="font-size:12px; color:#888;">${lRoll}</span>`;
                     const row = `
                         <tr>
                             <td>${b.date}</td><td>${b.time_slot}</td><td><strong>${b.room_id}</strong></td><td>${nameDisplay}</td>
@@ -159,7 +147,6 @@
         }
     }
 
-    // 3. CANCEL BOOKING
     async function deleteBooking(roomId, date, timeSlot) {
         if (!confirm(`Are you sure you want to cancel this booking? An email will be sent to the student.`)) return;
         try {
@@ -179,4 +166,4 @@
     }
 </script>
 </body>
-</html>g
+</html>
