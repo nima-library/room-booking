@@ -12,35 +12,22 @@
         .search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
         
         .booking-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* New CSS for History Cards */
-        .history-card { background: #f8fafc; border-color: #f1f5f9; opacity: 0.8; }
-        .history-card .booking-info h4 { color: #64748b; }
-        
         .booking-info h4 { margin: 0 0 5px 0; color: #1e2a4a; font-size: 16px; }
         .booking-info p { margin: 0; font-size: 13px; color: #64748b; }
         
         .cancel-btn { background: #ffebee; color: #c0392b; border: 1px solid #c0392b; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; font-family: 'Poppins'; transition: 0.2s; }
         .cancel-btn:hover { background: #c0392b; color: white; }
         
-        /* New CSS for badges and logout button */
-        .status-badge { background: #e2e8f0; color: #64748b; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-        .logout-btn { background: #64748b; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; font-family: 'Poppins'; transition: 0.2s; font-size: 14px; }
-        .logout-btn:hover { background: #475569; }
-        
         .empty-state { text-align: center; padding: 20px; color: #64748b; font-size: 14px; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 14px; }
         .back-link:hover { color: #D32F2F; }
-
-        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        @media (max-width: 500px) { .dash-header { flex-direction: column; align-items: flex-start; gap: 15px; } }
     </style>
 </head>
 <body style="background-color: #f4f6f8;">
 
 <header class="nirma-header">
     <div class="header-content">
-        <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Nirma_University_Logo.png" alt="Nirma Logo" class="header-logo">
+        <img src="images/nimalogo.jpg" alt="NIMA Logo" class="header-logo">
         <div class="header-titles">
             <h1>NIMA KNOWLEDGE CENTRE</h1>
             <h2>Room Booking Portal</h2>
@@ -49,28 +36,14 @@
 </header>
 
 <div class="dashboard-container">
-    
-    <div class="dash-header">
-        <div>
-            <h2 style="color: #1e2a4a; margin-bottom: 5px; margin-top: 0;"><i class="fa-solid fa-list-check"></i> My Dashboard</h2>
-            <p style="color: #64748b; font-size: 14px; margin-top: 0; margin-bottom: 0;">Logged in as: <strong id="userEmailDisplay" style="color: #D32F2F;">...</strong></p>
-        </div>
-        <button onclick="logoutUser()" class="logout-btn">
-            <i class="fa-solid fa-right-from-bracket"></i> Log Out
-        </button>
-    </div>
+    <h2 style="color: #1e2a4a; margin-bottom: 5px;"><i class="fa-solid fa-list-check"></i> My Dashboard</h2>
+    <p style="color: #64748b; font-size: 14px; margin-top: 0; margin-bottom: 25px;">Logged in as: <strong id="userEmailDisplay" style="color: #D32F2F;">...</strong></p>
 
-    <div class="search-box">
-        <h3 style="font-size: 18px; margin-top: 0; color: #1e2a4a; margin-bottom: 20px;"><i class="fa-solid fa-calendar-check" style="color: #28a745;"></i> Active Bookings</h3>
-        <div id="activeList">
+    <div class="search-box" id="resultsArea">
+        <h3 style="font-size: 18px; margin-top: 0; color: #1e2a4a; margin-bottom: 20px;"><i class="fa-solid fa-calendar-check" style="color: #D32F2F;"></i> Your Active Bookings</h3>
+        <div id="bookingsList">
             <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading your reservations...</div>
         </div>
-    </div>
-
-    <div class="search-box" style="background: transparent; border: none; box-shadow: none; padding: 0;">
-        <h3 style="font-size: 16px; margin-top: 0; color: #64748b; margin-bottom: 15px;"><i class="fa-solid fa-clock-rotate-left"></i> Past History</h3>
-        <div id="historyList">
-            </div>
     </div>
 
     <a href="booking.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
@@ -93,101 +66,40 @@
         findMyBookings(studentEmail);
     });
 
-    // 🚪 Logout Function
-    function logoutUser() {
-        localStorage.removeItem("studentEmail");
-        window.location.href = "index.html";
-    }
-
-    // ⏱️ Helper function to convert time string to a math-friendly hour
-    function getStartHour(timeString) {
-        if (!timeString) return 0;
-        const parts = timeString.split(' - ')[0]; 
-        let hour = parseInt(parts.split(':')[0]); 
-        const ampm = parts.split(' ')[1]; 
-        if (ampm === "PM" && hour !== 12) hour += 12;
-        if (ampm === "AM" && hour === 12) hour = 0;
-        return hour;
-    }
-
     async function findMyBookings(email) {
-        const activeList = document.getElementById('activeList');
-        const historyList = document.getElementById('historyList');
+        const bookingsList = document.getElementById('bookingsList');
         
         try {
+            // Ask backend for bookings using EMAIL instead of roll no
             const res = await fetch(`${BACKEND_URL}/my-bookings?email=${email}`);
             const data = await res.json();
             
-            activeList.innerHTML = "";
-            historyList.innerHTML = "";
+            bookingsList.innerHTML = "";
 
             if (data.status === "success" && data.bookings && data.bookings.length > 0) {
-                
-                // Get current local date and hour
-                const now = new Date();
-                const localTodayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-                const currentHour = now.getHours();
+                // Sort by nearest date first
+                data.bookings.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                const activeBookings = [];
-                const pastBookings = [];
-
-                // Sort the database results into Active vs Past
                 data.bookings.forEach(b => {
-                    const startHour = getStartHour(b.time_slot);
-                    
-                    if (b.date < localTodayStr) {
-                        pastBookings.push(b); // It happened on a previous day
-                    } else if (b.date === localTodayStr && startHour <= currentHour) {
-                        pastBookings.push(b); // It happened today, but the time has passed
-                    } else {
-                        activeBookings.push(b); // It is in the future!
-                    }
+                    const card = document.createElement('div');
+                    card.className = "booking-card";
+                    card.innerHTML = `
+                        <div class="booking-info">
+                            <h4>${b.room_id}</h4>
+                            <p><i class="fa-regular fa-calendar"></i> ${b.date}</p>
+                            <p><i class="fa-regular fa-clock"></i> ${b.time_slot}</p>
+                        </div>
+                        <button class="cancel-btn" onclick="cancelMyBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">
+                            Cancel
+                        </button>
+                    `;
+                    bookingsList.appendChild(card);
                 });
-
-                // Render ACTIVE Bookings
-                if (activeBookings.length > 0) {
-                    activeBookings.sort((a, b) => new Date(a.date) - new Date(b.date)); // Closest dates first
-                    activeBookings.forEach(b => {
-                        activeList.innerHTML += `
-                            <div class="booking-card">
-                                <div class="booking-info">
-                                    <h4>${b.room_id}</h4>
-                                    <p><i class="fa-regular fa-calendar"></i> ${b.date}</p>
-                                    <p><i class="fa-regular fa-clock"></i> ${b.time_slot}</p>
-                                </div>
-                                <button class="cancel-btn" onclick="cancelMyBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">
-                                    Cancel
-                                </button>
-                            </div>`;
-                    });
-                } else {
-                    activeList.innerHTML = `<div class="empty-state">You currently have no active reservations.</div>`;
-                }
-
-                // Render PAST HISTORY Bookings
-                if (pastBookings.length > 0) {
-                    pastBookings.sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent past first
-                    pastBookings.forEach(b => {
-                        historyList.innerHTML += `
-                            <div class="booking-card history-card">
-                                <div class="booking-info">
-                                    <h4>${b.room_id}</h4>
-                                    <p><i class="fa-regular fa-calendar"></i> ${b.date}</p>
-                                    <p><i class="fa-regular fa-clock"></i> ${b.time_slot}</p>
-                                </div>
-                                <div class="status-badge">Completed</div>
-                            </div>`;
-                    });
-                } else {
-                    historyList.innerHTML = `<div class="empty-state" style="border: 1px dashed #cbd5e1; border-radius: 8px;">No booking history found.</div>`;
-                }
-
             } else {
-                activeList.innerHTML = `<div class="empty-state">You currently have no active reservations.</div>`;
-                historyList.innerHTML = `<div class="empty-state" style="border: 1px dashed #cbd5e1; border-radius: 8px;">No booking history found.</div>`;
+                bookingsList.innerHTML = `<div class="empty-state">You currently have no active reservations.</div>`;
             }
         } catch (err) {
-            activeList.innerHTML = `<div class="empty-state" style="color: red;">❌ Failed to load bookings.</div>`;
+            bookingsList.innerHTML = `<div class="empty-state" style="color: red;">❌ Failed to load bookings.</div>`;
         }
     }
 
