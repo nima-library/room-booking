@@ -23,6 +23,7 @@
         .login-box input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; box-sizing: border-box;}
         .close-login-btn { position: absolute; top: 15px; right: 15px; color: #999; font-size: 20px; text-decoration: none; cursor: pointer; }
         
+        /* Report Filter Styles */
         .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
         .filter-grid label { font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 4px; }
         .filter-grid input, .filter-grid select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Poppins'; }
@@ -162,11 +163,9 @@
                             <th>Date</th>
                             <th>Floor</th>
                             <th>Room No</th>
-                            <th>Booked By</th>
                             <th>Institute</th>
                             <th>Booking Timing</th>
-                            <th class="no-print">Action</th> 
-                        </tr>
+                            <th class="no-print">Action</th> </tr>
                     </thead>
                     <tbody id="reportTableBody"></tbody>
                 </table>
@@ -182,7 +181,7 @@
     const ALL_TIMES = ["08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM", "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM", "05:00 PM - 06:00 PM"];
     const ALL_ROOMS = ["Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507", "Room 601", "Room 602", "Room 701", "Room 702", "Room 801", "Room 802"];
 
-    let globalBookings = []; 
+    let globalBookings = []; // Store data so we don't have to keep fetching
 
     async function checkLogin() {
         const pass = document.getElementById("adminPass").value;
@@ -191,28 +190,31 @@
             const result = await res.json();
             if (result.status === "success") { 
                 document.getElementById("loginOverlay").style.display = "none"; 
-                fetchMasterData(); 
+                fetchMasterData(); // Fetch once on login
             } 
             else { alert("❌ Wrong Password"); }
         } catch (err) { alert("Server Error"); }
     }
 
+    // Fetch data for the report
     async function fetchMasterData() {
         try {
             const res = await fetch(`${BACKEND_URL}/admin/all-bookings`);
             const data = await res.json();
             if (data.bookings) {
                 globalBookings = data.bookings.sort((a, b) => new Date(b.date) - new Date(a.date));
-                generateReport(); 
+                generateReport(); // Initial population
             }
         } catch (err) { console.error("Error fetching data:", err); }
     }
 
+    // 📊 GENERATE FILTERED REPORT
     function generateReport() {
         const tbody = document.getElementById("reportTableBody");
         document.getElementById("reportTableContainer").style.display = "block";
         tbody.innerHTML = "";
 
+        // Get filter values
         const fDateFrom = document.getElementById("filterDateFrom").value;
         const fDateTo = document.getElementById("filterDateTo").value;
         const fFloor = document.getElementById("filterFloor").value;
@@ -220,12 +222,14 @@
         const fInstitute = document.getElementById("filterInstitute").value;
         const fTime = document.getElementById("filterTime").value;
 
+        // Apply Filters
         let filtered = globalBookings.filter(b => {
             let matches = true;
             
             if (fDateFrom && b.date < fDateFrom) matches = false;
             if (fDateTo && b.date > fDateTo) matches = false;
             
+            // Floor extraction (e.g., "Room 501" -> "5")
             if (fFloor !== "All") {
                 const floorNum = b.room_id.replace("Room ", "").charAt(0);
                 if (floorNum !== fFloor) matches = false;
@@ -239,38 +243,29 @@
         });
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No records match your filters.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No records match your filters.</td></tr>`;
             return;
         }
 
+        // Render Table
         filtered.forEach(b => {
+            // Extract Floor for column
             let floorCol = "N/A";
             if (b.room_id && b.room_id !== "N/A") {
                 floorCol = b.room_id.replace("Room ", "").charAt(0) + "th Floor";
             }
 
-            // Extract Name and Roll
-            let leaderName = b.leader || b.leader_name || "N/A";
-            let leaderRoll = b.roll_no || b.leader_roll_no || "N/A";
+            let trStyle = (b.leader === "ADMIN BLOCK" || b.leader === "MAINTENANCE") ? "background: #fff3e0;" : "";
             let instDisplay = b.institute || "N/A";
-            let trStyle = (leaderName === "ADMIN BLOCK" || leaderName === "MAINTENANCE") ? "background: #fff3e0;" : "";
 
-            if (leaderName === "ADMIN BLOCK" || leaderName === "MAINTENANCE") { 
-                instDisplay = "-"; 
-                leaderRoll = "-";
-            }
-
-            // Create Name + Roll Number Display
-            let bookedByDisplay = (leaderName === "ADMIN BLOCK" || leaderName === "MAINTENANCE") ? 
-                `<strong>${leaderName}</strong>` : 
-                `<strong>${leaderName}</strong><br><span style="font-size:12px; color:#888;">${leaderRoll}</span>`;
+            // If Admin block, show empty inst/dept
+            if (b.leader === "ADMIN BLOCK") { instDisplay = "-"; }
 
             const row = `
                 <tr style="${trStyle}">
                     <td>${b.date}</td>
                     <td><strong>${floorCol}</strong></td>
                     <td>${b.room_id.replace("Room ", "")}</td>
-                    <td>${bookedByDisplay}</td>
                     <td>${instDisplay}</td>
                     <td>${b.time_slot}</td>
                     <td class="no-print">
@@ -286,7 +281,7 @@
         try {
             await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
             alert("Cancelled!");
-            fetchMasterData(); 
+            fetchMasterData(); // Refresh table
         } catch (err) { alert("Failed."); }
     }
 

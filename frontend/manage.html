@@ -81,11 +81,14 @@
                 data.bookings.sort((a, b) => new Date(a.date) - new Date(b.date));
 
                 data.bookings.forEach(b => {
+                    const roomNum = b.room_id.replace("Room ", "");
+                    const floorNum = roomNum.charAt(0);
+                    const displayRoom = `${floorNum}th Floor ${roomNum}`;
                     const card = document.createElement('div');
                     card.className = "booking-card";
                     card.innerHTML = `
                         <div class="booking-info">
-                            <h4>${b.room_id}</h4>
+                            <h4>${displayRoom}</h4>
                             <p><i class="fa-regular fa-calendar"></i> ${b.date}</p>
                             <p><i class="fa-regular fa-clock"></i> ${b.time_slot}</p>
                         </div>
