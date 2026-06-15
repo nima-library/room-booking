@@ -12,18 +12,20 @@
         
         .nirma-header { background-color: #D32F2F; color: white; padding: 10px 20px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: relative; z-index: 1000; height: 70px; }
         .header-content { display: flex; align-items: center; gap: 15px; }
-        .header-logo { height: 50px; background: white; padding: 2px; border-radius: 4px; }
+        /* Notice the logo src is changed to your local folder */
+        .header-logo { height: 50px; background: transparent; padding: 2px; border-radius: 4px; }
         .header-titles { display: flex; flex-direction: column; }
-        /* ✅ Changed to NIMA Knowledge Centre */
         .header-titles h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
         .header-titles h2 { font-size: 12px; margin: 0; font-weight: 400; opacity: 0.9; }
 
-        .landing-bg { height: calc(100vh - 70px); background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), url('https://upload.wikimedia.org/wikipedia/commons/e/e1/Duke_Humfrey%27s_Library_Interior_6%2C_Bodleian_Library%2C_Oxford%2C_UK_-_Diliff.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
-        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 90%; max-width: 400px; text-align: center; }
+        /* Notice the background image is changed to your local folder */
+        .landing-bg { height: calc(100vh - 70px); background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), url('images/bg-login.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
+        
+        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 90%; max-width: 450px; text-align: center; }
         .login-card h2 { margin-top: 0; color: #1e2a4a; font-size: 22px; margin-bottom: 5px; }
         .login-card p { color: #64748b; font-size: 14px; margin-bottom: 30px; }
 
-        .login-btn { width: 100%; padding: 15px; margin-bottom: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .login-btn { width: 100%; padding: 15px; margin-bottom: 15px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-student { background: white; color: #444; border: 2px solid #ddd; }
         .btn-student:hover { background: #f8f9fa; border-color: #ccc; }
         .btn-student img { width: 20px; }
@@ -41,7 +43,7 @@
 
 <header class="nirma-header">
     <div class="header-content">
-        <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Nirma_University_Logo.png" alt="Nirma Logo" class="header-logo">
+        <img src="images/logo.png" alt="NIMA Logo" class="header-logo">
         <div class="header-titles">
             <h1>NIMA Knowledge Centre</h1>
             <h2>Room Booking Portal</h2>
@@ -51,15 +53,16 @@
 
 <div class="landing-bg">
     <div class="login-card">
+        <h3 style="color: #D32F2F; font-size: 14px; margin-bottom: 10px; margin-top: 0;">Login with Nirma University Credentials for Room Booking</h3>
         <h2>Welcome to Nima Library</h2>
         <p>Please select your portal to continue</p>
 
         <button class="login-btn btn-student" onclick="studentLogin()">
             <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google">
-            Student Login
+            Login with Nirma University credentials
         </button>
         <button class="login-btn btn-staff" onclick="window.location.href='staff.html'">
-            <i class="fa-solid fa-user-tie"></i> Staff Login
+            <i class="fa-solid fa-user-tie"></i> Library Staff Login
         </button>
         <button class="login-btn btn-admin" onclick="window.location.href='admin.html'">
             <i class="fa-solid fa-shield-halved"></i> Admin Login
