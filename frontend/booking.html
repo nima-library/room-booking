@@ -3,89 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discussion Room Booking | NIMA Knowledge Centre</title>
+    <title>Room Booking | NIMA Knowledge Centre</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        body { background-color: #f4f6f8; margin: 0; font-family: 'Poppins', sans-serif; }
+        .nirma-header { background-color: #D32F2F; color: white; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: relative; z-index: 1000; height: 70px; }
+        .header-content { display: flex; align-items: center; gap: 15px; }
+        .header-logo { height: 50px; background: transparent; }
+        .header-titles { display: flex; flex-direction: column; }
+        .header-titles h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
+        .header-titles h2 { font-size: 12px; margin: 0; font-weight: 400; opacity: 0.9; }
+        .user-email-display { font-size: 13px; opacity: 0.9; }
+        
+        .booking-container { max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 13px; color: #64748b; margin-bottom: 5px; font-weight: 500; }
+        .input-group select, .input-group input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'Poppins'; box-sizing: border-box; }
+        
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
 
 <header class="nirma-header">
     <div class="header-content">
-        <img src="../images/nimalogo.jpg" alt="NIMA Logo" class="header-logo">
+        <img src="images/logo.png" alt="NIMA Logo" class="header-logo">
         <div class="header-titles">
             <h1>NIMA KNOWLEDGE CENTRE</h1>
             <h2>Room Booking Portal</h2>
         </div>
     </div>
+    <div class="user-email-display">
+        <i class="fa-solid fa-user"></i> <span id="displayEmail">Loading...</span>
+        <a href="manage.html" style="color: white; margin-left: 15px; text-decoration: underline; font-weight: 600;">My Dashboard</a>
+    </div>
 </header>
 
-<div class="slideshow-container">
-    <div class="mySlides fade">
-        <img src="../images/nimasitting.jpg" style="width:100%">
-    </div>
-    <div class="mySlides fade">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg/1280px-Biblioth%C3%A8que_de_l%27Assembl%C3%A9e_Nationale_%28Lunon%29.jpg" style="width:100%">
-    </div>
-    <div class="mySlides fade">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Library_of_Congress_Great_Hall_-_Jan_2006.jpg/1280px-Library_of_Congress_Great_Hall_-_Jan_2006.jpg" style="width:100%">
-    </div>
+<div style="display: flex; height: 250px; width: 100%; border-bottom: 4px solid #D32F2F;">
+    <div style="flex: 1; background: linear-gradient(rgba(30, 42, 74, 0.4), rgba(30, 42, 74, 0.4)), url('images/bg-login.jpg'); background-size: cover; background-position: center; border-right: 2px solid white;"></div>
+    <div style="flex: 1; background: linear-gradient(rgba(30, 42, 74, 0.4), rgba(30, 42, 74, 0.4)), url('images/bg-booking.jpg'); background-size: cover; background-position: center; border-left: 2px solid white;"></div>
 </div>
 
-<div class="main-wrapper">
-    <div class="container">
-
-        <div class="form-intro">
-            <h3>Reserve Your Space</h3>
-            <p>Select your team details below.</p>
-        </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-users"></i> Group Details</h3>
-            <form id="bookingForm">
-                <div class="input-group">
-                    <i class="fa-solid fa-user-tie input-icon"></i>
-                    <input type="text" id="leaderName" placeholder="Leader Name" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-id-card input-icon"></i>
-                    <input type="text" id="rollNo" placeholder="Roll No (e.g. 21BCE001)" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-people-group input-icon"></i>
-                    <select id="groupSize" required>
-                        <option value="" disabled selected>Select Group Size</option>
-                        <option value="3">3 Students</option>
-                        <option value="4">4 Students</option>
-                        <option value="5">5 Students</option>
-                        <option value="6">6 Students</option>
-                    </select>
-                </div>
-            </form>
-        </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-users-rectangle"></i> Group Members</h3>
-            <div id="groupMembersContainer">
-                <p style="color:#888; text-align:center; font-size:13px;">Select group size above to add member details</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3><i class="fa-solid fa-graduation-cap"></i> Academic Details</h3>
+<div class="booking-container">
+    <h2 style="color: #1e2a4a; margin-top: 0; margin-bottom: 25px;"><i class="fa-solid fa-calendar-plus"></i> Reserve Your Space</h2>
+    
+    <form id="bookingForm">
+        <div class="form-grid">
             
             <div class="input-group">
-                <i class="fa-solid fa-envelope input-icon"></i>
-                <input type="email" id="email" placeholder="Email Address" readonly style="background-color: #e9ecef; cursor: not-allowed;" title="Auto-filled from Google Login">
-            </div>
-            
-            <div class="input-group">
-                <i class="fa-solid fa-phone input-icon"></i>
-                <input type="tel" id="contactNo" placeholder="Contact Number" required>
-            </div>
-            
-            <div class="input-group">
-                <i class="fa-solid fa-building-columns input-icon"></i>
+                <label>Institute</label>
                 <select id="institute" required>
                     <option value="" disabled selected>Select Institute</option>
                     <option value="ITNU">Institute of Technology (ITNU)</option>
@@ -93,99 +62,144 @@
                     <option value="IPNU">Institute of Pharmacy (IPNU)</option>
                     <option value="ILNU">Institute of Law (ILNU)</option>
                     <option value="ISNU">Institute of Science (ISNU)</option>
-                    <option value="IAPNU">Institute of Architecture & Planning (IAPNU)</option>
                     <option value="ICNU">Institute of Commerce (ICNU)</option> 
-                    <option value="IISNU">Institute of International Study (IISNU)</option>
                     <option value="IDNU">Institute of Design (IDNU)</option>
-                    <option value="FDSR">Faculty of Doctoral Studies and Research (FDSR)</option>
+                    <option value="IAPNU">Institute of Architecture & Planning (IAPNU)</option>
                 </select>
             </div>
-            
-            <div class="input-group">
-                <i class="fa-solid fa-user-graduate input-icon"></i>
-                <select id="programme" required>
-                    <option value="" disabled selected>Select Programme</option>
-                    <option value="Bachelors">Bachelors (UG)</option>
-                    <option value="Masters">Masters (PG)</option>
-                    <option value="PhD">Ph.D.</option>
-                    <option value="Faculty/Staff">Faculty/Staff</option>
-                </select>
-            </div>
-        </div>
 
-        <div class="card">
-            <h3><i class="fa-solid fa-calendar-day"></i> Select Slot</h3>
             <div class="input-group">
-                <i class="fa-solid fa-calendar-days input-icon"></i>
+                <label>Date</label>
                 <input type="date" id="bookingDate" required>
             </div>
 
-            <div style="display:flex; justify-content:space-between; margin:15px 0 10px;">
-                <h4 style="margin:0; font-size:14px;">Available Time</h4>
-                <div style="font-size:12px; font-weight: 600;">
-                    <i class="fa-solid fa-circle" style="color:#28a745;"></i> Available
-                    <span style="margin-left: 10px;"><i class="fa-solid fa-circle" style="color:#dc3545;"></i> Booked</span>
-                </div>
-            </div>
-            <div class="slot-grid" id="slotGrid"></div>
-
-            <h4 style="margin:20px 0 10px; font-size:14px;">Available Room</h4>
-            <div class="room-grid" id="roomGrid"></div>
-
-            <div class="input-group" style="margin-top: 20px;">
-                <i class="fa-solid fa-bullseye input-icon"></i>
-                <select id="purpose" onchange="toggleOtherPurpose()" required>
-                    <option value="" disabled selected>Select Purpose</option>
-                    <option value="Group Study">Group Study</option>
-                    <option value="Project Discussion">Project Discussion</option>
-                    <option value="Other">Other</option>
+            <div class="input-group">
+                <label>Time Slot</label>
+                <select id="timeSlot" required onchange="filterRoomsByTime()">
+                    <option value="" disabled selected>Select Time Slot</option>
+                    <option value="08:00 AM - 09:00 AM">08:00 AM - 09:00 AM</option>
+                    <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
+                    <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                    <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                    <option value="12:00 PM - 01:00 PM">12:00 PM - 01:00 PM</option>
+                    <option value="01:00 PM - 02:00 PM">01:00 PM - 02:00 PM</option>
+                    <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+                    <option value="03:00 PM - 04:00 PM">03:00 PM - 04:00 PM</option>
+                    <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
+                    <option value="05:00 PM - 06:00 PM">05:00 PM - 06:00 PM</option>
+                    <option value="06:00 PM - 07:45 PM" style="color: #D32F2F; font-weight: bold;">06:00 PM - 07:45 PM (5th Floor Only)</option>
                 </select>
             </div>
-            <div class="input-group" id="otherPurposeContainer" style="display: none; margin-top: 10px;">
-                <i class="fa-solid fa-pen input-icon"></i>
-                <input type="text" id="otherPurposeText" placeholder="Please specify your purpose">
+
+            <div class="input-group">
+                <label>Room Number</label>
+                <select id="room" required>
+                    <option value="" disabled selected>Select Room</option>
+                    </select>
+            </div>
+
+            <div class="input-group">
+                <label>Leader Name</label>
+                <input type="text" id="leaderName" placeholder="Enter Full Name" required>
+            </div>
+
+            <div class="input-group">
+                <label>Roll Number</label>
+                <input type="text" id="rollNo" placeholder="e.g. 24BCS021" required>
             </div>
         </div>
 
-        <button id="confirmBtn" class="main-btn" onclick="bookRoom()">
-            Confirm Reservation
-        </button>
-        
-        <div style="text-align: center; margin-top: 25px; margin-bottom: 40px;">
-            <a href="manage.html" style="color: #64748b; font-size: 13px; text-decoration: underline;">
-                Manage / Cancel My Bookings
-            </a>
-        </div>
-
-    </div>
+        <button type="submit" class="main-btn" style="width: 100%; padding: 15px; background: #D32F2F; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; font-family: 'Poppins';">Confirm Booking</button>
+    </form>
 </div>
 
-<script src="main.js"></script>
-
 <script>
-    // Show/Hide the "Other" text box
-    function toggleOtherPurpose() {
-        const purposeSelect = document.getElementById("purpose").value;
-        const otherContainer = document.getElementById("otherPurposeContainer");
-        if (purposeSelect === "Other") {
-            otherContainer.style.display = "block";
+    const BACKEND_URL = "https://nima-backend.vercel.app"; 
+    
+    // Set Min Date to Today
+    document.getElementById('bookingDate').min = new Date().toISOString().split("T")[0];
+
+    // Auth Check
+    document.addEventListener('DOMContentLoaded', () => {
+        const studentEmail = localStorage.getItem("studentEmail");
+        if (!studentEmail) {
+            alert("Please log in first!");
+            window.location.href = "index.html";
         } else {
-            otherContainer.style.display = "none";
+            document.getElementById("displayEmail").innerText = studentEmail;
+        }
+        filterRoomsByTime(); // Populate rooms initially
+    });
+
+    // 🏢 DYNAMIC ROOM FILTERING LOGIC
+    const allRooms = [
+        "Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507",
+        "Room 601", "Room 602",
+        "Room 701", "Room 702",
+        "Room 801", "Room 802"
+    ];
+
+    function filterRoomsByTime() {
+        const timeSlot = document.getElementById("timeSlot").value;
+        const roomSelect = document.getElementById("room");
+        
+        // Save previously selected room if any
+        const previousSelection = roomSelect.value;
+        
+        // Clear current options
+        roomSelect.innerHTML = '<option value="" disabled selected>Select Room</option>';
+
+        allRooms.forEach(room => {
+            // IF it is the 6PM slot, ONLY allow 5th floor rooms
+            if (timeSlot === "06:00 PM - 07:45 PM" && !room.startsWith("Room 5")) {
+                return; // Skip this room
+            }
+            
+            const option = document.createElement("option");
+            option.value = room;
+            option.textContent = room;
+            roomSelect.appendChild(option);
+        });
+
+        // Try to re-select the room if it's still available in the new list
+        if (previousSelection) {
+            roomSelect.value = previousSelection;
         }
     }
 
-    // Slideshow Logic
-    let slideIndex = 0;
-    showSlides();
-    function showSlides() {
-        let i;
-        let slides = document.getElementsByClassName("mySlides");
-        for (i = 0; i < slides.length; i++) { slides[i].style.display = "none"; }
-        slideIndex++;
-        if (slideIndex > slides.length) {slideIndex = 1}    
-        slides[slideIndex-1].style.display = "block";  
-        setTimeout(showSlides, 4000); 
-    }
+    // Handle Form Submit
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const payload = {
+            email: localStorage.getItem("studentEmail"),
+            institute: document.getElementById('institute').value,
+            date: document.getElementById('bookingDate').value,
+            time_slot: document.getElementById('timeSlot').value,
+            room_id: document.getElementById('room').value,
+            leader: document.getElementById('leaderName').value,
+            roll_no: document.getElementById('rollNo').value
+        };
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/book-room`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.status === "success") {
+                alert("🎉 Booking Confirmed Successfully!");
+                window.location.href = "manage.html"; // Send to dashboard after booking
+            } else {
+                alert("❌ " + data.message);
+            }
+        } catch (err) {
+            alert("Failed to connect to server. Please try again.");
+        }
+    });
 </script>
+
 </body>
 </html>
