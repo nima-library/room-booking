@@ -2,13 +2,7 @@ const BACKEND_URL = "https://nima-backend.vercel.app";
 
 // --- 1. INITIAL SETUP & GOOGLE EMAIL CHECK ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 🔒 SECURITY: Auto-fill Google Email and lock it
-    const studentEmail = localStorage.getItem("studentEmail");
-    if (!studentEmail || !studentEmail.endsWith("@nirmauni.ac.in")) {
-        alert("Session Expired or Invalid. Please log in again.");
-        window.location.href = "index.html"; // Kick them back to login
-        return;
-    }
+    
     document.getElementById("email").value = studentEmail;
 
     // Date Setup
