@@ -11,8 +11,7 @@ app = Flask(__name__)
 CORS(app) 
 
 # --- CONFIGURATION ---
-ADMIN_PASSWORD = "admin123" 
-
+# (Note: ADMIN_PASSWORD is removed from here because it is now securely fetched from Firebase!)
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "noreply.roombooking@nirmauni.ac.in"  
@@ -75,6 +74,16 @@ def send_admin_cancellation_email(to_email, name, room, date, time):
         server.quit()
     except Exception as e: print(f"Email Error: {e}")
 
+# --- HELPER: SECURE FIREBASE PASSWORDS ---
+def get_system_password(user_type):
+    try:
+        doc = db.collection('System_Settings').document('credentials').get()
+        if doc.exists:
+            return doc.to_dict().get(f'{user_type}_password', f'{user_type}123')
+        return f'{user_type}123' # Default fallback
+    except Exception:
+        return f'{user_type}123'
+
 # --- API ROUTES ---
 
 @app.route('/confirm-booking', methods=['POST'])
@@ -83,7 +92,6 @@ def confirm_booking():
         data = request.json
         
         # 🛑 RULE 1: DUPLICATE BOOKING CHECK (Same roll no, same day)
-        # Bypassed if Admin is blocking a slot
         if data['leader_name'] != "ADMIN BLOCK":
             existing_bookings = db.collection('daily_slots')\
                 .where('date', '==', data['date'])\
@@ -149,7 +157,6 @@ def cancel_via_email():
         docs = db.collection('daily_slots').where('cancel_token', '==', token).stream()
         found = False
         for doc in docs:
-            # We fetch data before deleting to send the cancellation email
             booking_info = doc.to_dict()
             user_email = booking_info.get('details', {}).get('email')
             leader_name = booking_info.get('details', {}).get('leader_name')
@@ -228,11 +235,6 @@ def my_bookings():
         return jsonify({"status": "success", "bookings": bookings}), 200
     except Exception as e: return jsonify({"error": str(e)}), 500
 
-@app.route('/admin-login', methods=['POST'])
-def admin_login():
-    if request.json.get('password') == ADMIN_PASSWORD: return jsonify({"status": "success"}), 200
-    return jsonify({"status": "error"}), 401
-
 @app.route('/admin/all-bookings', methods=['GET'])
 def all_bookings():
     docs = db.collection('daily_slots').stream()
@@ -246,9 +248,106 @@ def all_bookings():
             "time_slot": d.get('time_slot'), 
             "leader": details.get('leader_name', 'Unknown'), 
             "roll_no": details.get('leader_roll_no', 'N/A'),
-            "institute": details.get('institute', 'N/A') # Added for reports
+            "institute": details.get('institute', 'N/A') 
         })
     return jsonify({"bookings": data}), 200
+
+# ==========================================
+# 🔒 SECURE LOGIN & PASSWORD MANAGEMENT APIs
+# ==========================================
+
+@app.route('/admin-login', methods=['POST'])
+def admin_login():
+    req_pass = request.json.get('password')
+    if req_pass == get_system_password('admin'): 
+        return jsonify({"status": "success"}), 200
+    return jsonify({"status": "error", "message": "Invalid password"}), 401
+
+@app.route('/admin/change-password', methods=['POST'])
+def change_admin_password():
+    try:
+        new_pass = request.json.get('new_password')
+        if not new_pass: return jsonify({"status": "error", "message": "Password required"}), 400
+        # Save to Firebase permanently
+        db.collection('System_Settings').document('credentials').set({'admin_password': new_pass}, merge=True)
+        return jsonify({"status": "success"}), 200
+    except Exception as e: return jsonify({"status": "error"}), 500
+
+@app.route('/admin/change-staff-password', methods=['POST'])
+def change_staff_password():
+    try:
+        new_pass = request.json.get('new_password')
+        if not new_pass: return jsonify({"status": "error", "message": "Password required"}), 400
+        # Save to Firebase permanently
+        db.collection('System_Settings').document('credentials').set({'staff_password': new_pass}, merge=True)
+        return jsonify({"status": "success"}), 200
+    except Exception as e: return jsonify({"status": "error"}), 500
+
+# ==========================================
+# 🚪 NEW FIREBASE ROOM MANAGEMENT APIs
+# ==========================================
+
+@app.route('/get-rooms', methods=['GET'])
+def get_rooms():
+    try:
+        docs = db.collection('Library_Rooms').stream()
+        rooms = [doc.to_dict().get('room_name') for doc in docs]
+
+        # Auto-create the database if it is empty!
+        if len(rooms) == 0:
+            default_rooms = [
+                "Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507",
+                "Room 601", "Room 602", "Room 701", "Room 702", "Room 801", "Room 802"
+            ]
+            batch = db.batch()
+            for r in default_rooms:
+                doc_ref = db.collection('Library_Rooms').document()
+                batch.set(doc_ref, {'room_name': r})
+            batch.commit()
+            rooms = default_rooms
+
+        rooms.sort()
+        return jsonify({'status': 'success', 'rooms': rooms}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/admin/add-room', methods=['POST'])
+def add_room():
+    try:
+        room_name = request.json.get('room_name')
+        if not room_name or not room_name.startswith("Room "):
+            return jsonify({'status': 'error', 'message': "Must start with 'Room '"}), 400
+
+        # Check for duplicates
+        docs = db.collection('Library_Rooms').where('room_name', '==', room_name).stream()
+        if any(docs):
+            return jsonify({'status': 'error', 'message': 'Room already exists'}), 400
+
+        db.collection('Library_Rooms').add({'room_name': room_name})
+        return jsonify({'status': 'success'}), 200
+    except Exception as e:
+        return jsonify({'status': 'error'}), 500
+
+@app.route('/admin/delete-room', methods=['POST'])
+def delete_room():
+    try:
+        room_name = request.json.get('room_name')
+        if not room_name: return jsonify({'status': 'error'}), 400
+
+        docs = db.collection('Library_Rooms').where('room_name', '==', room_name).stream()
+        deleted = False
+        
+        batch = db.batch()
+        for doc in docs:
+            batch.delete(doc.reference)
+            deleted = True
+            
+        if not deleted: return jsonify({'status': 'error', 'message': 'Room not found'}), 404
+        
+        batch.commit()
+        return jsonify({'status': 'success'}), 200
+    except Exception as e:
+        return jsonify({'status': 'error'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
