@@ -15,13 +15,12 @@
         .delete-btn { background: #ffebee; color: #c0392b; border: 1px solid #c0392b; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
         .delete-btn:hover { background: #c0392b; color: white; }
         
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.95); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .overlay-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.95); z-index: 999; display: flex; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; width: 320px; position: relative; }
         .login-box input, .login-box select { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; box-sizing: border-box; font-family: 'Poppins';}
         .close-login-btn { position: absolute; top: 15px; right: 15px; color: #999; font-size: 20px; text-decoration: none; cursor: pointer; }
         .close-login-btn:hover { color: #c0392b; }
         
-        /* New Filter Bar Styles */
         .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; border: 1px solid #e2e8f0; }
         .filter-group { display: flex; flex-direction: column; }
         .filter-group label { font-size: 12px; color: #64748b; margin-bottom: 5px; font-weight: 500; }
@@ -30,7 +29,8 @@
 </head>
 <body style="background-color: #f4f6f8;">
 
-<div id="loginOverlay">
+<!-- Login Overlay -->
+<div id="loginOverlay" class="overlay-bg">
     <div class="login-box">
         <a href="index.html" class="close-login-btn" title="Back to Home"><i class="fa-solid fa-xmark"></i></a>
         <i class="fa-solid fa-user-tie" style="font-size: 40px; color: #34495e; margin-bottom: 15px;"></i>
@@ -44,8 +44,8 @@
             <option value="8">8th Floor</option>
         </select>
         
-        <input type="password" id="staffPass" placeholder="Enter Staff Password (staff123)">
-        <button class="main-btn" style="background: #34495e;" onclick="checkStaffLogin()">Access Floor</button>
+        <input type="password" id="staffPass" placeholder="Enter Staff Password">
+        <button id="staffLoginBtn" class="main-btn" style="background: #34495e;" onclick="checkStaffLogin()">Access Floor</button>
     </div>
 </div>
 
@@ -53,22 +53,46 @@
     <div class="container" style="max-width: 1000px;">
         
         <div class="staff-header">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h1><i class="fa-solid fa-layer-group"></i> Floor <span id="displayFloor">X</span> Dashboard</h1>
                     <p style="margin:0; opacity: 0.9;">Manage active bookings for your assigned rooms</p>
                 </div>
-                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="location.reload()">Logout</button>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="location.reload()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </div>
         </div>
 
-        <div class="card">
+        <!-- NEW: TODAY'S LIVE BOOKINGS FOR THIS FLOOR -->
+        <div class="card" style="margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin:0;"><i class="fa-solid fa-list-check"></i> Floor Bookings</h3>
-                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 14px; background: #34495e;" onclick="loadFloorBookings()">
-                    <i class="fa-solid fa-rotate"></i> Refresh Data
+                <div>
+                    <h3 style="margin:0;"><i class="fa-solid fa-calendar-day" style="color: #27ae60;"></i> Today's Live Bookings</h3>
+                    <p style="font-size: 13px; color: #888; margin-top: 2px; margin-bottom: 0;">Students currently scheduled for your floor today.</p>
+                </div>
+                <button class="main-btn" style="width: auto; padding: 6px 12px; font-size: 13px; background: #34495e;" onclick="loadFloorBookings()">
+                    <i class="fa-solid fa-rotate"></i> Refresh
                 </button>
             </div>
+            <div style="overflow-x: auto;">
+                <table class="booking-table">
+                    <thead>
+                        <tr>
+                            <th>Room No</th>
+                            <th>Booked By</th>
+                            <th>Timing</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffTodayBody">
+                        <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- HISTORICAL / FULL REPORT CARD -->
+        <div class="card">
+            <h3 style="margin:0; margin-bottom: 15px;"><i class="fa-solid fa-list-check"></i> Floor Booking Report</h3>
 
             <div class="filter-bar">
                 <div class="filter-group">
@@ -92,8 +116,8 @@
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Time</th>
-                            <th>Room</th>
+                            <th>Timing</th>
+                            <th>Room No</th>
                             <th>Booked By</th>
                             <th>Action</th>
                         </tr>
@@ -111,78 +135,130 @@
 <script>
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
     let myFloor = ""; 
-    let currentFilteredData = []; // Store data globally for the CSV export
+    let currentFilteredData = []; 
 
-    function checkStaffLogin() {
+    // --- SECURE LOGIN TALKING TO FIREBASE ---
+    async function checkStaffLogin() {
         const pass = document.getElementById("staffPass").value;
         const floor = document.getElementById("staffFloor").value;
         
         if (!floor) return alert("Please select your floor.");
         
-        if (pass === "staff123") {
-            myFloor = floor;
-            document.getElementById("displayFloor").innerText = myFloor;
-            document.getElementById("loginOverlay").style.display = "none";
-            loadFloorBookings();
-        } else {
-            alert("❌ Wrong Password");
+        const btn = document.getElementById("staffLoginBtn");
+        btn.innerText = "Checking...";
+        
+        try {
+            const res = await fetch(`${BACKEND_URL}/staff-login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: pass })
+            });
+            const result = await res.json();
+            
+            if (result.status === "success") {
+                myFloor = floor;
+                document.getElementById("displayFloor").innerText = myFloor;
+                document.getElementById("loginOverlay").style.display = "none";
+                loadFloorBookings();
+            } else {
+                alert("❌ Wrong Password");
+                btn.innerText = "Access Floor";
+            }
+        } catch (err) {
+            alert("Server Error. Ensure your backend is deployed.");
+            btn.innerText = "Access Floor";
         }
     }
 
+    // --- LOAD DATA FOR BOTH TABLES ---
     async function loadFloorBookings() {
-        const tbody = document.getElementById("staffTableBody");
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
+        const tbodyToday = document.getElementById("staffTodayBody");
+        const tbodyReport = document.getElementById("staffTableBody");
+        
+        tbodyToday.innerHTML = `<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>`;
+        tbodyReport.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
+        
         try {
             const res = await fetch(`${BACKEND_URL}/admin/all-bookings`);
             const data = await res.json();
-            tbody.innerHTML = ""; 
             
-            if (data.bookings && data.bookings.length > 0) {
-                // 1. Filter by Floor
+            if (data.bookings) {
+                // Filter specifically for this floor
                 let floorBookings = data.bookings.filter(b => b.room_id.replace("Room ", "").startsWith(myFloor));
                 
-                // 2. Apply Date Filters if selected
+                // Hide "ADMIN BLOCK" entries
+                floorBookings = floorBookings.filter(b => {
+                    let lName = b.leader || b.leader_name || "";
+                    return lName !== "ADMIN BLOCK" && lName !== "MAINTENANCE";
+                });
+
+                // ============================================
+                // 1. POPULATE TODAY'S LIVE BOOKINGS TABLE
+                // ============================================
+                const todayObj = new Date();
+                const todayStr = todayObj.getFullYear() + '-' + String(todayObj.getMonth() + 1).padStart(2, '0') + '-' + String(todayObj.getDate()).padStart(2, '0');
+                
+                let todays = floorBookings.filter(b => b.date === todayStr);
+                // Sort chronologically by time slot
+                todays.sort((a, b) => a.time_slot.localeCompare(b.time_slot)); 
+
+                if (todays.length === 0) {
+                    tbodyToday.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#888;">No student bookings for today.</td></tr>`;
+                } else {
+                    tbodyToday.innerHTML = "";
+                    todays.forEach(b => {
+                        let lName = b.leader || b.leader_name || "N/A";
+                        let lRoll = b.roll_no || b.leader_roll_no || "N/A";
+                        let bookedByDisplay = `<strong>${lName}</strong><br><span style="font-size:12px; color:#888;">${lRoll}</span>`;
+
+                        tbodyToday.innerHTML += `
+                            <tr>
+                                <td><strong>${b.room_id.replace("Room ", "")}</strong></td>
+                                <td>${bookedByDisplay}</td>
+                                <td>${b.time_slot}</td>
+                                <td><button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button></td>
+                            </tr>`;
+                    });
+                }
+
+                // ============================================
+                // 2. POPULATE FILTERED REPORT TABLE
+                // ============================================
                 const fromDate = document.getElementById("filterFrom").value;
                 const toDate = document.getElementById("filterTo").value;
 
-                if (fromDate) {
-                    floorBookings = floorBookings.filter(b => b.date >= fromDate);
-                }
-                if (toDate) {
-                    floorBookings = floorBookings.filter(b => b.date <= toDate);
-                }
-
-                // 3. Sort closest date first
-                floorBookings.sort((a, b) => new Date(b.date) - new Date(a.date));
+                let reportBookings = floorBookings;
+                if (fromDate) reportBookings = reportBookings.filter(b => b.date >= fromDate);
+                if (toDate) reportBookings = reportBookings.filter(b => b.date <= toDate);
                 
-                // Save for CSV download
-                currentFilteredData = floorBookings;
+                // Sort nearest dates first
+                reportBookings.sort((a, b) => new Date(b.date) - new Date(a.date));
+                currentFilteredData = reportBookings; // Save for CSV export
 
-                if (floorBookings.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No bookings found for the selected dates.</td></tr>`;
-                    return;
+                if (reportBookings.length === 0) {
+                    tbodyReport.innerHTML = `<tr><td colspan="5" style="text-align:center;">No records match your dates.</td></tr>`;
+                } else {
+                    tbodyReport.innerHTML = "";
+                    reportBookings.forEach(b => {
+                        let lName = b.leader || b.leader_name || "N/A";
+                        let lRoll = b.roll_no || b.leader_roll_no || "N/A";
+                        let bookedByDisplay = `<strong>${lName}</strong><br><span style="font-size:12px; color:#888;">${lRoll}</span>`;
+
+                        tbodyReport.innerHTML += `
+                            <tr>
+                                <td>${b.date}</td>
+                                <td>${b.time_slot}</td>
+                                <td><strong>${b.room_id.replace("Room ", "")}</strong></td>
+                                <td>${bookedByDisplay}</td>
+                                <td><button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button></td>
+                            </tr>`;
+                    });
                 }
-
-                floorBookings.forEach(b => {
-                    let lName = b.leader || b.leader_name || "N/A";
-                    let lRoll = b.roll_no || b.leader_roll_no || "N/A";
-                    if (lName === "ADMIN BLOCK" || lName === "MAINTENANCE") return; 
-
-                    const nameDisplay = `<strong>${lName}</strong><br><span style="font-size:12px; color:#888;">${lRoll}</span>`;
-                    const row = `
-                        <tr>
-                            <td>${b.date}</td><td>${b.time_slot}</td><td><strong>${b.room_id}</strong></td><td>${nameDisplay}</td>
-                            <td><button class="delete-btn" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')"><i class="fa-solid fa-xmark"></i> Cancel</button></td>
-                        </tr>`;
-                    tbody.innerHTML += row;
-                });
-            } else { 
-                currentFilteredData = [];
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No bookings found.</td></tr>`; 
             }
         } catch (err) { 
             console.error(err); 
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data.</td></tr>`; 
+            tbodyToday.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Failed to load data.</td></tr>`;
+            tbodyReport.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data.</td></tr>`; 
         }
     }
 
@@ -190,40 +266,30 @@
         if (!confirm(`Are you sure you want to cancel this booking? An email will be sent to the student.`)) return;
         try {
             const res = await fetch(`${BACKEND_URL}/cancel-booking`, { 
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
+                method: "POST", headers: { "Content-Type": "application/json" }, 
                 body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) 
             });
             const result = await res.json();
             if (result.status === "success") { 
                 alert("Booking Cancelled Successfully."); 
                 loadFloorBookings(); 
-            } else { 
-                alert("Error: " + result.message); 
-            }
+            } else { alert("Error: " + result.message); }
         } catch (err) { alert("Failed to connect to server."); }
     }
 
-    // Export to CSV Function
+    // --- CSV EXPORT ---
     function downloadCSV() {
-        if (currentFilteredData.length === 0) {
-            return alert("No data available to download. Please adjust your filters.");
-        }
+        if (currentFilteredData.length === 0) return alert("No data available to download.");
 
         let csvContent = "Date,Time Slot,Room,Leader Name,Roll Number\n";
 
         currentFilteredData.forEach(b => {
-            let lName = b.leader || b.leader_name || "N/A";
-            let lRoll = b.roll_no || b.leader_roll_no || "N/A";
-            
-            // Clean up commas in names so it doesn't break the CSV format
-            lName = lName.replace(/,/g, "");
-
+            let lName = (b.leader || b.leader_name || "N/A").replace(/,/g, "");
+            let lRoll = (b.roll_no || b.leader_roll_no || "N/A").replace(/,/g, "");
             let row = `${b.date},${b.time_slot},${b.room_id},${lName},${lRoll}`;
             csvContent += row + "\n";
         });
 
-        // Create the downloadable file
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
