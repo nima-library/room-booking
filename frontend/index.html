@@ -10,16 +10,17 @@
     <style>
         body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; background-color: #f4f6f8; }
         
-        .welcome-banner { background-color: #d32f2f; color: white; text-align: center; padding: 10px; font-weight: bold; font-family: 'Poppins', sans-serif; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
         .nirma-header { background-color: #D32F2F; color: white; padding: 10px 20px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); height: 70px; }
-        .header-content { display: flex; align-items: center; gap: 15px; }
+        .header-content { display: flex; align-items: center; gap: 15px; width: 100%; }
         .header-logo { height: 50px; background: transparent; padding: 2px; border-radius: 4px; }
         .header-titles { display: flex; flex-direction: column; }
         .header-titles h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
         .header-titles h2 { font-size: 12px; margin: 0; font-weight: 400; opacity: 0.9; }
 
-        .landing-bg { height: calc(100vh - 120px); background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), url('images/bg-login.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
+        /* The single-line welcome banner */
+        .welcome-banner { margin-left: auto; font-size: 18px; font-weight: 600; padding-right: 20px; white-space: nowrap; }
+
+        .landing-bg { height: calc(100vh - 70px); background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), url('images/bg-login.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
         
         .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 90%; max-width: 450px; text-align: center; }
         .login-card h2 { margin-top: 0; color: #1e2a4a; font-size: 22px; margin-bottom: 5px; font-family: 'Poppins', sans-serif; }
@@ -33,6 +34,8 @@
         .btn-staff:hover { background: #2c3e50; }
         .btn-admin { background: #D32F2F; color: white; margin-bottom: 0; }
         .btn-admin:hover { background: #b71c1c; }
+        
+        @media (max-width: 850px) { .welcome-banner { display: none; } }
         @media (max-width: 600px) { .header-titles h2 { display: none; } }
     </style>
 
@@ -41,8 +44,6 @@
 </head>
 <body>
 
-<div class="welcome-banner">Welcome to NKC Room Booking System</div>
-
 <header class="nirma-header">
     <div class="header-content">
         <img src="images/logo.png" alt="NIMA Logo" class="header-logo">
@@ -50,6 +51,7 @@
             <h1>NIMA Knowledge Centre</h1>
             <h2>Room Booking Portal</h2>
         </div>
+        <div class="welcome-banner">Welcome to NKC Room Booking System</div>
     </div>
 </header>
 
