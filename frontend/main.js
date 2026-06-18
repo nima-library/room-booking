@@ -112,6 +112,10 @@ function showAvailableRooms(slotTime) {
     if (dayOfWeek === 6 && startHour >= 14) {
         allowedRooms = ROOMS.filter(r => r.includes("50") || r.includes("60"));
     }
+    // NEW RULE: 06:00 PM slot ONLY 5th Floor (Regardless of the day)
+    if (slotTime === "06:00 PM - 07:45 PM") {
+        allowedRooms = allowedRooms.filter(r => r.includes("50"));
+    }
 
     if (allowedRooms.length === 0) {
         roomGrid.innerHTML = "<p style='color:red; font-size:13px;'>No floors available at this time.</p>";
@@ -144,12 +148,12 @@ function updateSlotAvailability(selectedDateStr) {
     grid.innerHTML = ""; 
     document.getElementById('roomGrid').innerHTML = ""; 
 
-    // ✅ Added 8-9 AM and 5-6 PM
+    // ✅ Added the new 6:00 PM - 07:45 PM Slot
     const times = [
         "08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM",
         "11:00 AM - 12:00 PM", "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM",
         "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM",
-        "05:00 PM - 06:00 PM"
+        "05:00 PM - 06:00 PM", "06:00 PM - 07:45 PM"
     ];
 
     const now = new Date();
