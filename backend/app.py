@@ -263,6 +263,15 @@ def admin_login():
         return jsonify({"status": "success"}), 200
     return jsonify({"status": "error", "message": "Invalid password"}), 401
 
+# --- NEW ROUTE ADDED HERE ---
+@app.route('/staff-login', methods=['POST'])
+def staff_login():
+    req_pass = request.json.get('password')
+    if req_pass == get_system_password('staff'): 
+        return jsonify({"status": "success"}), 200
+    return jsonify({"status": "error", "message": "Invalid password"}), 401
+# -----------------------------
+
 @app.route('/admin/change-password', methods=['POST'])
 def change_admin_password():
     try:
