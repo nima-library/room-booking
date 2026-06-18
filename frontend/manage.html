@@ -22,12 +22,19 @@
         .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 14px; }
         .back-link:hover { color: #D32F2F; }
     </style>
+    <script>
+        // BOUNCER: Check auth instantly BEFORE the body even loads!
+        const checkEmail = localStorage.getItem("studentEmail");
+        if (!checkEmail || !checkEmail.endsWith("@nirmauni.ac.in")) {
+            window.location.replace("index.html");
+        }
+    </script>
 </head>
 <body style="background-color: #f4f6f8;">
 
 <header class="nirma-header">
     <div class="header-content">
-        <img src="../images/nimalogo.jpg" alt="NIMA Logo" class="header-logo">
+        <img src="images/logo.png" alt="NIMA Logo" class="header-logo" style="height: 50px; background: transparent;">
         <div class="header-titles">
             <h1>NIMA KNOWLEDGE CENTRE</h1>
             <h2>Room Booking Portal</h2>
@@ -55,22 +62,34 @@
     // Auto-Run when page opens
     document.addEventListener('DOMContentLoaded', () => {
         const studentEmail = localStorage.getItem("studentEmail");
-        
-        if (!studentEmail) {
-            alert("Session Expired. Please log in again.");
-            window.location.href = "index.html";
-            return;
-        }
-
         document.getElementById("userEmailDisplay").innerText = studentEmail;
         findMyBookings(studentEmail);
     });
+
+    // 🕒 HELPER: Check if a booking is in the past
+    function isPastBooking(dateStr, timeStr) {
+        const now = new Date();
+        const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        
+        if (dateStr < todayStr) return true; // Past date
+        
+        if (dateStr === todayStr) {
+            // Check if the time slot has already started today
+            const startHourStr = timeStr.split(' - ')[0]; 
+            let hour = parseInt(startHourStr.split(':')[0]); 
+            const ampm = startHourStr.split(' ')[1]; 
+            if (ampm === "PM" && hour !== 12) hour += 12;
+            if (ampm === "AM" && hour === 12) hour = 0;
+            
+            if (hour <= now.getHours()) return true; // Past time today
+        }
+        return false;
+    }
 
     async function findMyBookings(email) {
         const bookingsList = document.getElementById('bookingsList');
         
         try {
-            // Ask backend for bookings using EMAIL instead of roll no
             const res = await fetch(`${BACKEND_URL}/my-bookings?email=${email}`);
             const data = await res.json();
             
@@ -83,15 +102,24 @@
                 data.bookings.forEach(b => {
                     const card = document.createElement('div');
                     card.className = "booking-card";
+                    
+                    const isPast = isPastBooking(b.date, b.time_slot);
+                    let actionHTML = "";
+                    
+                    // If the booking is in the past, show a badge instead of a cancel button
+                    if (isPast) {
+                        actionHTML = `<span style="background: #f1f5f9; color: #64748b; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; font-family: 'Poppins'; border: 1px solid #e2e8f0;">Past Booking</span>`;
+                    } else {
+                        actionHTML = `<button class="cancel-btn" onclick="cancelMyBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button>`;
+                    }
+
                     card.innerHTML = `
                         <div class="booking-info">
                             <h4>${b.room_id}</h4>
                             <p><i class="fa-regular fa-calendar"></i> ${b.date}</p>
                             <p><i class="fa-regular fa-clock"></i> ${b.time_slot}</p>
                         </div>
-                        <button class="cancel-btn" onclick="cancelMyBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">
-                            Cancel
-                        </button>
+                        ${actionHTML}
                     `;
                     bookingsList.appendChild(card);
                 });
@@ -116,7 +144,6 @@
             const result = await res.json();
             if (result.status === "success") {
                 alert("✅ Booking cancelled successfully!");
-                // Refresh the list automatically
                 findMyBookings(localStorage.getItem("studentEmail")); 
             } else {
                 alert("❌ Error: " + result.message);

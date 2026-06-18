@@ -20,6 +20,12 @@
         .login-box input, .login-box select { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; box-sizing: border-box; font-family: 'Poppins';}
         .close-login-btn { position: absolute; top: 15px; right: 15px; color: #999; font-size: 20px; text-decoration: none; cursor: pointer; }
         .close-login-btn:hover { color: #c0392b; }
+        
+        /* New Filter Bar Styles */
+        .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; border: 1px solid #e2e8f0; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 12px; color: #64748b; margin-bottom: 5px; font-weight: 500; }
+        .filter-group input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Poppins'; }
     </style>
 </head>
 <body style="background-color: #f4f6f8;">
@@ -58,9 +64,26 @@
 
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin:0;"><i class="fa-solid fa-list-check"></i> Today's Bookings</h3>
+                <h3 style="margin:0;"><i class="fa-solid fa-list-check"></i> Floor Bookings</h3>
                 <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 14px; background: #34495e;" onclick="loadFloorBookings()">
-                    <i class="fa-solid fa-rotate"></i> Refresh
+                    <i class="fa-solid fa-rotate"></i> Refresh Data
+                </button>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" id="filterFrom">
+                </div>
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" id="filterTo">
+                </div>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 14px; background: #2c3e50;" onclick="loadFloorBookings()">
+                    <i class="fa-solid fa-filter"></i> Apply Filter
+                </button>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 14px; background: #27ae60; margin-left: auto;" onclick="downloadCSV()">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
                 </button>
             </div>
 
@@ -88,6 +111,7 @@
 <script>
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
     let myFloor = ""; 
+    let currentFilteredData = []; // Store data globally for the CSV export
 
     function checkStaffLogin() {
         const pass = document.getElementById("staffPass").value;
@@ -114,22 +138,36 @@
             tbody.innerHTML = ""; 
             
             if (data.bookings && data.bookings.length > 0) {
-                const floorBookings = data.bookings.filter(b => b.room_id.replace("Room ", "").startsWith(myFloor));
+                // 1. Filter by Floor
+                let floorBookings = data.bookings.filter(b => b.room_id.replace("Room ", "").startsWith(myFloor));
                 
+                // 2. Apply Date Filters if selected
+                const fromDate = document.getElementById("filterFrom").value;
+                const toDate = document.getElementById("filterTo").value;
+
+                if (fromDate) {
+                    floorBookings = floorBookings.filter(b => b.date >= fromDate);
+                }
+                if (toDate) {
+                    floorBookings = floorBookings.filter(b => b.date <= toDate);
+                }
+
+                // 3. Sort closest date first
                 floorBookings.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
+                // Save for CSV download
+                currentFilteredData = floorBookings;
+
                 if (floorBookings.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No bookings found for Floor ${myFloor}.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No bookings found for the selected dates.</td></tr>`;
                     return;
                 }
 
                 floorBookings.forEach(b => {
-                    // Pull Leader and Roll explicitly
                     let lName = b.leader || b.leader_name || "N/A";
                     let lRoll = b.roll_no || b.leader_roll_no || "N/A";
                     if (lName === "ADMIN BLOCK" || lName === "MAINTENANCE") return; 
 
-                    // ✅ Added Leader Name and Roll here
                     const nameDisplay = `<strong>${lName}</strong><br><span style="font-size:12px; color:#888;">${lRoll}</span>`;
                     const row = `
                         <tr>
@@ -139,6 +177,7 @@
                     tbody.innerHTML += row;
                 });
             } else { 
+                currentFilteredData = [];
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No bookings found.</td></tr>`; 
             }
         } catch (err) { 
@@ -163,6 +202,37 @@
                 alert("Error: " + result.message); 
             }
         } catch (err) { alert("Failed to connect to server."); }
+    }
+
+    // Export to CSV Function
+    function downloadCSV() {
+        if (currentFilteredData.length === 0) {
+            return alert("No data available to download. Please adjust your filters.");
+        }
+
+        let csvContent = "Date,Time Slot,Room,Leader Name,Roll Number\n";
+
+        currentFilteredData.forEach(b => {
+            let lName = b.leader || b.leader_name || "N/A";
+            let lRoll = b.roll_no || b.leader_roll_no || "N/A";
+            
+            // Clean up commas in names so it doesn't break the CSV format
+            lName = lName.replace(/,/g, "");
+
+            let row = `${b.date},${b.time_slot},${b.room_id},${lName},${lRoll}`;
+            csvContent += row + "\n";
+        });
+
+        // Create the downloadable file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Floor_${myFloor}_Bookings.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 </script>
 </body>
