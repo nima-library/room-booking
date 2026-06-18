@@ -1,12 +1,20 @@
 const BACKEND_URL = "https://nima-backend.vercel.app"; 
 
+let selectedSlot = null;
+let selectedRoom = null;
+let currentBookings = []; 
+let ROOMS = []; // 🚀 Now starts empty and loads dynamically from Firebase!
+
 // --- 1. INITIAL SETUP ---
-document.addEventListener('DOMContentLoaded', () => {
-    // FIX: We need to pull the email from memory so the form can auto-fill without crashing!
+document.addEventListener('DOMContentLoaded', async () => {
+    // Fill email
     const studentEmail = localStorage.getItem("studentEmail");
     if (studentEmail) {
         document.getElementById("email").value = studentEmail;
     }
+
+    // 🚀 NEW: Load rooms from database first!
+    await loadRoomsFromDatabase();
 
     // Date Setup
     const dateInput = document.getElementById('bookingDate');
@@ -28,27 +36,32 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('groupSize').addEventListener('change', updateMemberFields);
 });
 
-let selectedSlot = null;
-let selectedRoom = null;
-let currentBookings = []; 
-
-const ROOMS = [
-    "Room 501", "Room 502", "Room 503", "Room 504", "Room 505", "Room 506", "Room 507",
-    "Room 601", "Room 602", "Room 701", "Room 702", "Room 801", "Room 802"
-];
+// --- 🌐 NEW: FETCH ROOMS FROM FIREBASE ---
+async function loadRoomsFromDatabase() {
+    try {
+        const res = await fetch(`${BACKEND_URL}/get-rooms`);
+        const data = await res.json();
+        if (data.status === 'success' && data.rooms.length > 0) {
+            ROOMS = data.rooms;
+        } else {
+            // Fallback just in case the database is totally empty
+            ROOMS = ["Room 501", "Room 502", "Room 503", "Room 504", "Room 505"]; 
+        }
+    } catch (err) {
+        console.error("Failed to load rooms from DB:", err);
+        ROOMS = ["Room 501", "Room 502", "Room 503", "Room 504", "Room 505"]; // Fallback
+    }
+}
 
 // 📅 HOLIDAY & WEEKEND CHECKER
 function isHoliday(dateObj) {
-    const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
-    
-    // Rule: 2nd & 4th Saturdays are closed
+    const dayOfWeek = dateObj.getDay(); 
     if (dayOfWeek === 6) {
         const date = dateObj.getDate();
         const isSecondSat = date > 7 && date <= 14;
         const isFourthSat = date > 21 && date <= 28;
         if (isSecondSat || isFourthSat) return true;
     }
-
     return false;
 }
 
@@ -109,7 +122,7 @@ function showAvailableRooms(slotTime) {
     if (dayOfWeek === 6 && startHour >= 14) {
         allowedRooms = ROOMS.filter(r => r.includes("50") || r.includes("60"));
     }
-    // NEW RULE: 06:00 PM slot ONLY 5th Floor (Regardless of the day)
+    // Rule: 06:00 PM slot ONLY 5th Floor 
     if (slotTime === "06:00 PM - 07:45 PM") {
         allowedRooms = allowedRooms.filter(r => r.includes("50"));
     }
@@ -170,25 +183,22 @@ function updateSlotAvailability(selectedDateStr) {
         
         const startHour = getStartHour(timeText);
 
-        // Rule: Sundays ONLY 10 AM to 4 PM
         if (dayOfWeek === 0 && (startHour < 10 || startHour >= 16)) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">CLOSED</small>`;
         }
-        // Past Dates
         else if (selectedDateStr < localTodayStr) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
         } 
-        // Today's Past Hours
         else if (selectedDateStr === localTodayStr && startHour <= currentHour) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
         } 
-        // Full Slots
+        // 🚀 NEW: It now dynamically checks against the length of the LIVE database rooms!
         else if (slotCounts[timeText] >= ROOMS.length) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
@@ -230,7 +240,6 @@ function updateMemberFields() {
 async function bookRoom() {
     if (!selectedSlot || !selectedRoom) return alert("⚠️ Please select a Time Slot and a Room.");
     
-    // Validate inputs
     const leaderName = document.getElementById('leaderName').value;
     const rollNo = document.getElementById('rollNo').value;
     const email = document.getElementById('email').value; 
@@ -251,7 +260,6 @@ async function bookRoom() {
         return alert("⚠️ Please fill in all details, including dropdown selections.");
     }
 
-    // ✅ STRICT VALIDATION: Ensure all group members are filled out
     const members = [];
     let missingMemberData = false;
     document.querySelectorAll('.member-input-block').forEach(block => {
