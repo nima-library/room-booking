@@ -465,6 +465,75 @@
             alert("Room not found. Check spelling (e.g. Room 508)");
         }
     }
+    function generateReport() {
+        const tbody = document.getElementById("reportTableBody");
+        document.getElementById("reportTableContainer").style.display = "block";
+        tbody.innerHTML = "";
+
+        const fDateFrom = document.getElementById("filterDateFrom").value;
+        const fDateTo = document.getElementById("filterDateTo").value;
+        const fFloor = document.getElementById("filterFloor").value;
+        const fRoom = document.getElementById("filterRoom").value;
+        const fInstitute = document.getElementById("filterInstitute").value;
+        const fTime = document.getElementById("filterTime").value;
+
+        // 1. Apply basic filters
+        let filtered = globalBookings.filter(b => {
+            let matches = true;
+            if (fDateFrom && b.date < fDateFrom) matches = false;
+            if (fDateTo && b.date > fDateTo) matches = false;
+            if (fFloor !== "All") {
+                const floorNum = b.room_id.replace("Room ", "").charAt(0);
+                if (floorNum !== fFloor) matches = false;
+            }
+            if (fRoom !== "All" && b.room_id !== fRoom) matches = false;
+            if (fInstitute !== "All" && b.institute !== fInstitute) matches = false;
+            if (fTime !== "All" && b.time_slot !== fTime) matches = false;
+            return matches;
+        });
+
+        // 2. 🛑 STRICTLY REMOVE ALL ADMIN BLOCKS FROM THE REPORT 🛑
+        let studentBookingsOnly = filtered.filter(b => {
+            let leaderName = b.leader || b.leader_name || "";
+            return leaderName !== "ADMIN BLOCK" && leaderName !== "MAINTENANCE";
+        });
+
+        // Save this clean data for the Excel Export!
+        currentFilteredAdminData = studentBookingsOnly; 
+
+        if (studentBookingsOnly.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No student bookings match your filters.</td></tr>`;
+            return;
+        }
+
+        // 3. Draw the table using ONLY the real student bookings
+        studentBookingsOnly.forEach(b => {
+            let floorCol = "N/A";
+            if (b.room_id && b.room_id !== "N/A") {
+                floorCol = b.room_id.replace("Room ", "").charAt(0) + "th Floor";
+            }
+
+            let leaderName = b.leader || b.leader_name || "N/A";
+            let leaderRoll = b.roll_no || b.leader_roll_no || "N/A";
+            let instDisplay = b.institute || "N/A";
+
+            let bookedByDisplay = `<strong>${leaderName}</strong><br><span style="font-size:12px; color:#888;">${leaderRoll}</span>`;
+
+            const row = `
+                <tr>
+                    <td>${b.date}</td>
+                    <td><strong>${floorCol}</strong></td>
+                    <td>${b.room_id.replace("Room ", "")}</td>
+                    <td>${bookedByDisplay}</td>
+                    <td>${instDisplay}</td>
+                    <td>${b.time_slot}</td>
+                    <td class="no-print">
+                        <button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button>
+                    </td>
+                </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
 </script>
 
 <style type="text/css" media="print">

@@ -1,9 +1,12 @@
 const BACKEND_URL = "https://nima-backend.vercel.app"; 
 
-// --- 1. INITIAL SETUP & GOOGLE EMAIL CHECK ---
+// --- 1. INITIAL SETUP ---
 document.addEventListener('DOMContentLoaded', () => {
-    
-    document.getElementById("email").value = studentEmail;
+    // FIX: We need to pull the email from memory so the form can auto-fill without crashing!
+    const studentEmail = localStorage.getItem("studentEmail");
+    if (studentEmail) {
+        document.getElementById("email").value = studentEmail;
+    }
 
     // Date Setup
     const dateInput = document.getElementById('bookingDate');
@@ -142,7 +145,6 @@ function updateSlotAvailability(selectedDateStr) {
     grid.innerHTML = ""; 
     document.getElementById('roomGrid').innerHTML = ""; 
 
-    // ✅ Added the new 6:00 PM - 07:45 PM Slot
     const times = [
         "08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM",
         "11:00 AM - 12:00 PM", "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM",
