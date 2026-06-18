@@ -10,17 +10,19 @@
     <style>
         body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; background-color: #f4f6f8; }
         
-        .nirma-header { background-color: #D32F2F; color: white; padding: 10px 20px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: relative; z-index: 1000; height: 70px; }
+        .welcome-banner { background-color: #d32f2f; color: white; text-align: center; padding: 10px; font-weight: bold; font-family: 'Poppins', sans-serif; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .nirma-header { background-color: #D32F2F; color: white; padding: 10px 20px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); height: 70px; }
         .header-content { display: flex; align-items: center; gap: 15px; }
         .header-logo { height: 50px; background: transparent; padding: 2px; border-radius: 4px; }
         .header-titles { display: flex; flex-direction: column; }
         .header-titles h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
         .header-titles h2 { font-size: 12px; margin: 0; font-weight: 400; opacity: 0.9; }
 
-        .landing-bg { height: calc(100vh - 70px); background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), url('images/bg-login.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
+        .landing-bg { height: calc(100vh - 120px); background: linear-gradient(rgba(30, 42, 74, 0.7), rgba(30, 42, 74, 0.7)), url('images/bg-login.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
         
         .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 90%; max-width: 450px; text-align: center; }
-        .login-card h2 { margin-top: 0; color: #1e2a4a; font-size: 22px; margin-bottom: 5px; }
+        .login-card h2 { margin-top: 0; color: #1e2a4a; font-size: 22px; margin-bottom: 5px; font-family: 'Poppins', sans-serif; }
         .login-card p { color: #64748b; font-size: 14px; margin-bottom: 30px; }
 
         .login-btn { width: 100%; padding: 15px; margin-bottom: 15px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -39,6 +41,8 @@
 </head>
 <body>
 
+<div class="welcome-banner">Welcome to NKC Room Booking System</div>
+
 <header class="nirma-header">
     <div class="header-content">
         <img src="images/logo.png" alt="NIMA Logo" class="header-logo">
@@ -51,7 +55,7 @@
 
 <div class="landing-bg">
     <div class="login-card">
-        <h2>Welcome to Nima Library</h2>
+        <h2>Welcome to NIMA Library</h2>
         <p>Please select your portal to continue</p>
 
         <button class="login-btn btn-student" onclick="studentLogin()">
@@ -85,11 +89,9 @@
 
     function studentLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        
         firebase.auth().signInWithPopup(provider)
         .then((result) => {
             const userEmail = result.user.email;
-            
             if (userEmail.endsWith("@nirmauni.ac.in")) {
                 localStorage.setItem("studentEmail", userEmail);
                 window.location.href = "booking.html";
