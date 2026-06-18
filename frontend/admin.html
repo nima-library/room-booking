@@ -497,27 +497,44 @@
         });
     }
 
-    function downloadAdminCSV() {
-        if (currentFilteredAdminData.length === 0) return alert("No data available to export.");
-        let csvContent = "Date,Floor,Room No,Booked By,Roll Number,Institute,Time Slot\n";
-        currentFilteredAdminData.forEach(b => {
-            let floorCol = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
-            let lName = (b.leader || b.leader_name || "N/A").replace(/,/g, ""); 
-            let lRoll = (b.roll_no || b.leader_roll_no || "N/A").replace(/,/g, "");
-            let inst = (b.institute || "N/A").replace(/,/g, "");
-            let row = `${b.date},${floorCol},${b.room_id},${lName},${lRoll},${inst},${b.time_slot}`;
-            csvContent += row + "\n";
-        });
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Library_Admin_Report.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+   // --- EXCEL / CSV EXPORT WITH TEAM MEMBERS ---
+function downloadAdminCSV() {
+    if (currentFilteredAdminData.length === 0) {
+        return alert("No data available to export. Please adjust your filters.");
     }
+
+    // Updated headers to include Group Members
+    let csvContent = "Date,Floor,Room No,Leader Name,Leader Roll,Group Members,Institute,Time Slot\n";
+
+    currentFilteredAdminData.forEach(b => {
+        let floorCol = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
+        let lName = (b.leader || b.leader_name || "N/A").replace(/,/g, ""); 
+        let lRoll = (b.roll_no || b.leader_roll_no || "N/A").replace(/,/g, "");
+        let inst = (b.institute || "N/A").replace(/,/g, "");
+        
+        // 🚀 NEW: Extract Group Members
+        // We look for 'members' array in the booking data. 
+        // If it exists, we join them into a single string separated by semicolons
+        let teamMembers = "None";
+        if (b.members && Array.isArray(b.members)) {
+            teamMembers = b.members.map(m => `${m.name} (${m.roll})`).join("; ");
+        }
+        // If the backend sends 'members' as a raw string or differently, adjust here.
+        
+        let row = `${b.date},${floorCol},${b.room_id},${lName},${lRoll},"${teamMembers}",${inst},${b.time_slot}`;
+        csvContent += row + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Library_Detailed_Report.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
     async function deleteBooking(roomId, date, timeSlot) {
         if (!confirm(`Cancel this booking? The student will be notified.`)) return;
