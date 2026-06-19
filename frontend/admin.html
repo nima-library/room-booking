@@ -497,31 +497,44 @@
         });
     }
 
-   // --- EXCEL / CSV EXPORT WITH TEAM MEMBERS ---
+  // --- EXCEL / CSV EXPORT WITH ALL FORM DETAILS ---
 function downloadAdminCSV() {
     if (currentFilteredAdminData.length === 0) {
         return alert("No data available to export. Please adjust your filters.");
     }
 
-    // Updated headers to include Group Members
-    let csvContent = "Date,Floor,Room No,Leader Name,Leader Roll,Group Members,Institute,Time Slot\n";
+    // Comprehensive headers covering all form fields
+    let csvContent = "Date,Time Slot,Floor,Room No,Leader Name,Leader Roll,Contact No,Email,Institute,Programme,Purpose,Group Members\n";
 
     currentFilteredAdminData.forEach(b => {
+        // Helper to safely clean commas and handle missing data
+        const clean = (val) => (val ? String(val).replace(/,/g, "") : "N/A");
+
         let floorCol = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
-        let lName = (b.leader || b.leader_name || "N/A").replace(/,/g, ""); 
-        let lRoll = (b.roll_no || b.leader_roll_no || "N/A").replace(/,/g, "");
-        let inst = (b.institute || "N/A").replace(/,/g, "");
         
-        // 🚀 NEW: Extract Group Members
-        // We look for 'members' array in the booking data. 
-        // If it exists, we join them into a single string separated by semicolons
+        // Extracting nested details safely
+        let d = b.details || {}; // Access the full booking object
+        
+        let lName = clean(d.leader_name || b.leader);
+        let lRoll = clean(d.leader_roll_no || b.roll_no);
+        let contact = clean(d.contact_no);
+        let email = clean(d.email);
+        let inst = clean(d.institute || b.institute);
+        let prog = clean(d.programme);
+        let purpose = clean(d.purpose);
+
+        // Group members logic
         let teamMembers = "None";
-        if (b.members && Array.isArray(b.members)) {
-            teamMembers = b.members.map(m => `${m.name} (${m.roll})`).join("; ");
+        if (d.members && Array.isArray(d.members)) {
+            teamMembers = d.members.map(m => `${m.name}(${m.roll})`).join("; ");
         }
-        // If the backend sends 'members' as a raw string or differently, adjust here.
+
+        // Construct the row
+        let row = [
+            b.date, b.time_slot, floorCol, b.room_id, 
+            lName, lRoll, contact, email, inst, prog, purpose, `"${teamMembers}"`
+        ].join(",");
         
-        let row = `${b.date},${floorCol},${b.room_id},${lName},${lRoll},"${teamMembers}",${inst},${b.time_slot}`;
         csvContent += row + "\n";
     });
 
@@ -529,7 +542,7 @@ function downloadAdminCSV() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `Library_Detailed_Report.csv`);
+    link.setAttribute("download", `Full_Library_Booking_Report.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
