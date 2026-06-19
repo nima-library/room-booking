@@ -498,55 +498,32 @@
     }
 
   // --- EXCEL / CSV EXPORT WITH ALL FORM DETAILS ---
-function downloadAdminCSV() {
-    if (currentFilteredAdminData.length === 0) {
-        return alert("No data available to export. Please adjust your filters.");
-    }
+  function downloadAdminCSV() {
+    if (currentFilteredAdminData.length === 0) return alert("No data available.");
 
-    // Comprehensive headers covering all form fields
-    let csvContent = "Date,Time Slot,Floor,Room No,Leader Name,Leader Roll,Contact No,Email,Institute,Programme,Purpose,Group Members\n";
+    let csvContent = "Date,Time Slot,Floor,Room No,Leader,Roll No,Contact,Email,Institute,Programme,Purpose,Group Members\n";
 
     currentFilteredAdminData.forEach(b => {
-        // Helper to safely clean commas and handle missing data
-        const clean = (val) => (val ? String(val).replace(/,/g, "") : "N/A");
-
-        let floorCol = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
+        let floor = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
         
-        // Extracting nested details safely
-        let d = b.details || {}; // Access the full booking object
-        
-        let lName = clean(d.leader_name || b.leader);
-        let lRoll = clean(d.leader_roll_no || b.roll_no);
-        let contact = clean(d.contact_no);
-        let email = clean(d.email);
-        let inst = clean(d.institute || b.institute);
-        let prog = clean(d.programme);
-        let purpose = clean(d.purpose);
-
-        // Group members logic
-        let teamMembers = "None";
-        if (d.members && Array.isArray(d.members)) {
-            teamMembers = d.members.map(m => `${m.name}(${m.roll})`).join("; ");
+        // Handle members safely
+        let memberList = "None";
+        if (b.members && Array.isArray(b.members) && b.members.length > 0) {
+            memberList = b.members.map(m => `${m.name}(${m.roll})`).join("; ");
         }
 
-        // Construct the row
-        let row = [
-            b.date, b.time_slot, floorCol, b.room_id, 
-            lName, lRoll, contact, email, inst, prog, purpose, `"${teamMembers}"`
-        ].join(",");
-        
+        // Clean values to prevent CSV breaking
+        const clean = (val) => String(val || "N/A").replace(/,/g, "");
+
+        let row = `${b.date},${b.time_slot},${floor},${b.room_id},${clean(b.leader)},${clean(b.roll_no)},${clean(b.contact_no)},${clean(b.email)},${clean(b.institute)},${clean(b.programme)},${clean(b.purpose)},"${memberList}"`;
         csvContent += row + "\n";
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Full_Library_Booking_Report.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
+    link.href = URL.createObjectURL(blob);
+    link.download = "Library_Report.csv";
     link.click();
-    document.body.removeChild(link);
 }
 
     async function deleteBooking(roomId, date, timeSlot) {
