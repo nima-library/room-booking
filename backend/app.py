@@ -248,7 +248,12 @@ def all_bookings():
             "time_slot": d.get('time_slot'), 
             "leader": details.get('leader_name', 'Unknown'), 
             "roll_no": details.get('leader_roll_no', 'N/A'),
-            "institute": details.get('institute', 'N/A') 
+            "institute": details.get('institute', 'N/A'),
+            "email": details.get('email', 'N/A'),
+            "contact_no": details.get('contact_no', 'N/A'),
+            "programme": details.get('programme', 'N/A'),
+            "purpose": details.get('purpose', 'N/A'),
+            "members": details.get('members', []) # 🚀 Added this line!
         })
     return jsonify({"bookings": data}), 200
 
