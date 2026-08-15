@@ -73,7 +73,7 @@
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="document.getElementById('adminPassModal').style.display='flex'"><i class="fa-solid fa-shield"></i> Admin Pass</button>
                     <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="document.getElementById('staffPassModal').style.display='flex'"><i class="fa-solid fa-user-tie"></i> Staff Pass</button>
-                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="location.reload()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                 </div>
             </div>
         </div>
@@ -254,12 +254,48 @@
 
 <script>
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
+    const ADMIN_TOKEN_KEY = "nimaAdminToken";
     
     const ALL_TIMES = ["08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM", "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM", "05:00 PM - 06:00 PM", "06:00 PM - 07:45 PM"];
     
     let ALL_ROOMS = []; // Loaded from Firebase dynamically!
     let globalBookings = []; 
     let currentFilteredAdminData = []; 
+
+    function getAuthHeaders() {
+        const headers = { "Content-Type": "application/json" };
+        const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+        if (token) headers.Authorization = `Bearer ${token}`;
+        return headers;
+    }
+
+    async function verifyAdminSession() {
+        const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+        if (!token) return false;
+        try {
+            const res = await fetch(`${BACKEND_URL}/auth/verify`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.status === "success" && data.role === "admin") {
+                document.getElementById("loginOverlay").style.display = "none";
+                fetchRooms();
+                fetchMasterData();
+                return true;
+            }
+        } catch (err) {
+            console.error("Auth verify failed:", err);
+        }
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+        return false;
+    }
+
+    function logoutAdmin() {
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+        location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", verifyAdminSession);
 
     function getDatesInRange(startDate, endDate) {
         const date = new Date(startDate);
@@ -279,7 +315,8 @@
         try {
             const res = await fetch(`${BACKEND_URL}/admin-login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pass }) });
             const result = await res.json();
-            if (result.status === "success") { 
+            if (result.status === "success" && result.token) { 
+                localStorage.setItem(ADMIN_TOKEN_KEY, result.token);
                 document.getElementById("loginOverlay").style.display = "none"; 
                 fetchRooms(); 
                 fetchMasterData(); 
@@ -294,7 +331,7 @@
     // --- FIREBASE ROOM FUNCTIONS ---
     async function fetchRooms() {
         try {
-            const res = await fetch(`${BACKEND_URL}/get-rooms`);
+            const res = await fetch(`${BACKEND_URL}/get-rooms`, { headers: getAuthHeaders() });
             const data = await res.json();
             if (data.status === 'success') {
                 ALL_ROOMS = data.rooms;
@@ -322,7 +359,7 @@
         document.getElementById('addRoomBtn').innerHTML = "Adding...";
         try {
             const res = await fetch(`${BACKEND_URL}/admin/add-room`, { 
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ room_name: newRoom }) 
+                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_name: newRoom }) 
             });
             const data = await res.json();
             if(data.status === 'success') {
@@ -342,7 +379,7 @@
         document.getElementById('delRoomBtn').innerHTML = "Deleting...";
         try {
             const res = await fetch(`${BACKEND_URL}/admin/delete-room`, { 
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ room_name: roomToDel }) 
+                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_name: roomToDel }) 
             });
             const data = await res.json();
             if(data.status === 'success') {
@@ -360,7 +397,7 @@
         if (!newPass) return alert("Please enter a new password.");
         try {
             const res = await fetch(`${BACKEND_URL}/admin/change-password`, { 
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ new_password: newPass }) 
+                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ new_password: newPass }) 
             });
             const result = await res.json();
             if (result.status === "success") {
@@ -375,7 +412,7 @@
         if (!newPass) return alert("Please enter a new staff password.");
         try {
             const res = await fetch(`${BACKEND_URL}/admin/change-staff-password`, { 
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ new_password: newPass }) 
+                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ new_password: newPass }) 
             });
             const result = await res.json();
             if (result.status === "success") {
@@ -388,7 +425,7 @@
     // --- DATA & REPORTS ---
     async function fetchMasterData() {
         try {
-            const res = await fetch(`${BACKEND_URL}/admin/all-bookings`);
+            const res = await fetch(`${BACKEND_URL}/admin/all-bookings`, { headers: getAuthHeaders() });
             const data = await res.json();
             if (data.bookings) {
                 globalBookings = data.bookings.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -529,7 +566,7 @@
     async function deleteBooking(roomId, date, timeSlot) {
         if (!confirm(`Cancel this booking? The student will be notified.`)) return;
         try {
-            await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
+            await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
             alert("Cancelled!");
             fetchMasterData(); 
         } catch (err) { alert("Failed."); }
@@ -545,7 +582,7 @@
 
         try {
             for (let d of datesToBlock) {
-                await fetch(`${BACKEND_URL}/admin/block-day`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: d, reason: reason }) });
+                await fetch(`${BACKEND_URL}/admin/block-day`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ date: d, reason: reason }) });
             }
             alert(`✅ Successfully blocked ${datesToBlock.length} day(s)!`);
             fetchMasterData();
@@ -568,7 +605,7 @@
 
         try {
             for(let d of datesToBlock) {
-                await fetch(`${BACKEND_URL}/admin/block-slots`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: d, slots: slotsToBlock, rooms: ALL_ROOMS }) });
+                await fetch(`${BACKEND_URL}/admin/block-slots`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ date: d, slots: slotsToBlock, rooms: ALL_ROOMS }) });
             }
             alert(`✅ Blocked ${slotsToBlock.length} hours across ${datesToBlock.length} day(s)!`);
             fetchMasterData();

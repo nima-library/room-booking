@@ -6,6 +6,11 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import uuid
+import os
+import hashlib
+from functools import wraps
+from datetime import datetime, timedelta, timezone
+import jwt
 
 app = Flask(__name__)
 CORS(app) 
@@ -16,6 +21,25 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "noreply.roombooking@nirmauni.ac.in"  
 SENDER_PASSWORD = "rgnwarylovvaxijz" 
+def derive_jwt_secret():
+    explicit = os.environ.get("JWT_SECRET")
+    if explicit:
+        return explicit
+
+    firebase_credentials = os.environ.get("FIREBASE_CREDENTIALS")
+    if firebase_credentials:
+        return hashlib.sha256(firebase_credentials.encode("utf-8")).hexdigest()
+
+    for path in ("serviceAccountKey.json", "/etc/secrets/serviceAccountKey.json"):
+        if os.path.exists(path):
+            with open(path, "rb") as handle:
+                return hashlib.sha256(handle.read()).hexdigest()
+
+    return "dev-only-jwt-secret-change-me"
+
+JWT_SECRET = derive_jwt_secret()
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRES_HOURS = 12
 
 # --- HELPER: EMAIL FUNCTIONS ---
 def send_confirmation_email(to_email, booking_data, token):
@@ -83,6 +107,49 @@ def get_system_password(user_type):
         return f'{user_type}123' # Default fallback
     except Exception:
         return f'{user_type}123'
+
+def issue_token(role):
+    now = datetime.now(timezone.utc)
+    payload = {
+        "role": role,
+        "iat": now,
+        "exp": now + timedelta(hours=JWT_EXPIRES_HOURS),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def get_bearer_token():
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        return auth_header.split(" ", 1)[1].strip()
+    return None
+
+def require_auth(allowed_roles=None):
+    allowed_roles = set(allowed_roles or [])
+
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            token = get_bearer_token()
+            if not token:
+                return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+            try:
+                payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            except jwt.ExpiredSignatureError:
+                return jsonify({"status": "error", "message": "Session expired"}), 401
+            except jwt.InvalidTokenError:
+                return jsonify({"status": "error", "message": "Invalid token"}), 401
+
+            role = payload.get("role")
+            if allowed_roles and role not in allowed_roles:
+                return jsonify({"status": "error", "message": "Forbidden"}), 403
+
+            request.jwt_payload = payload
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 # --- API ROUTES ---
 
@@ -175,6 +242,7 @@ def cancel_via_email():
     except Exception as e: return f"Error: {str(e)}", 500
 
 @app.route('/admin/block-day', methods=['POST'])
+@require_auth(["admin"])
 def block_day():
     try:
         data = request.json
@@ -183,6 +251,7 @@ def block_day():
     except Exception as e: return jsonify({"status": "error"}), 400
 
 @app.route('/admin/block-slots', methods=['POST'])
+@require_auth(["admin"])
 def block_slots():
     try:
         data = request.json
@@ -236,6 +305,7 @@ def my_bookings():
     except Exception as e: return jsonify({"error": str(e)}), 500
 
 @app.route('/admin/all-bookings', methods=['GET'])
+@require_auth(["admin", "staff"])
 def all_bookings():
     docs = db.collection('daily_slots').stream()
     data = []
@@ -265,7 +335,7 @@ def all_bookings():
 def admin_login():
     req_pass = request.json.get('password')
     if req_pass == get_system_password('admin'): 
-        return jsonify({"status": "success"}), 200
+        return jsonify({"status": "success", "token": issue_token("admin"), "role": "admin"}), 200
     return jsonify({"status": "error", "message": "Invalid password"}), 401
 
 # --- NEW ROUTE ADDED HERE ---
@@ -273,11 +343,25 @@ def admin_login():
 def staff_login():
     req_pass = request.json.get('password')
     if req_pass == get_system_password('staff'): 
-        return jsonify({"status": "success"}), 200
+        return jsonify({"status": "success", "token": issue_token("staff"), "role": "staff"}), 200
     return jsonify({"status": "error", "message": "Invalid password"}), 401
 # -----------------------------
 
+@app.route('/auth/verify', methods=['GET'])
+def verify_auth():
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return jsonify({"status": "success", "role": payload.get("role")}), 200
+    except jwt.ExpiredSignatureError:
+        return jsonify({"status": "error", "message": "Session expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"status": "error", "message": "Invalid token"}), 401
+
 @app.route('/admin/change-password', methods=['POST'])
+@require_auth(["admin"])
 def change_admin_password():
     try:
         new_pass = request.json.get('new_password')
@@ -288,6 +372,7 @@ def change_admin_password():
     except Exception as e: return jsonify({"status": "error"}), 500
 
 @app.route('/admin/change-staff-password', methods=['POST'])
+@require_auth(["admin"])
 def change_staff_password():
     try:
         new_pass = request.json.get('new_password')
@@ -326,6 +411,7 @@ def get_rooms():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/admin/add-room', methods=['POST'])
+@require_auth(["admin"])
 def add_room():
     try:
         room_name = request.json.get('room_name')
@@ -343,6 +429,7 @@ def add_room():
         return jsonify({'status': 'error'}), 500
 
 @app.route('/admin/delete-room', methods=['POST'])
+@require_auth(["admin"])
 def delete_room():
     try:
         room_name = request.json.get('room_name')

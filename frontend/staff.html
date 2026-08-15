@@ -58,7 +58,7 @@
                     <h1><i class="fa-solid fa-layer-group"></i> Floor <span id="displayFloor">X</span> Dashboard</h1>
                     <p style="margin:0; opacity: 0.9;">Manage active bookings for your assigned rooms</p>
                 </div>
-                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="location.reload()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="logoutStaff()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </div>
         </div>
 
@@ -134,8 +134,50 @@
 
 <script>
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
+    const STAFF_TOKEN_KEY = "nimaStaffToken";
     let myFloor = ""; 
     let currentFilteredData = []; 
+
+    function getAuthHeaders() {
+        const headers = { "Content-Type": "application/json" };
+        const token = localStorage.getItem(STAFF_TOKEN_KEY);
+        if (token) headers.Authorization = `Bearer ${token}`;
+        return headers;
+    }
+
+    async function verifyStaffSession() {
+        const token = localStorage.getItem(STAFF_TOKEN_KEY);
+        if (!token) return false;
+        try {
+            const res = await fetch(`${BACKEND_URL}/auth/verify`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.status === "success" && data.role === "staff") {
+                document.getElementById("loginOverlay").style.display = "none";
+                const savedFloor = localStorage.getItem("staffFloor");
+                if (savedFloor) {
+                    myFloor = savedFloor;
+                    document.getElementById("displayFloor").innerText = myFloor;
+                    loadFloorBookings();
+                }
+                return true;
+            }
+        } catch (err) {
+            console.error("Auth verify failed:", err);
+        }
+        localStorage.removeItem(STAFF_TOKEN_KEY);
+        localStorage.removeItem("staffFloor");
+        return false;
+    }
+
+    function logoutStaff() {
+        localStorage.removeItem(STAFF_TOKEN_KEY);
+        localStorage.removeItem("staffFloor");
+        location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", verifyStaffSession);
 
     // --- SECURE LOGIN TALKING TO FIREBASE ---
     async function checkStaffLogin() {
@@ -155,7 +197,9 @@
             });
             const result = await res.json();
             
-            if (result.status === "success") {
+            if (result.status === "success" && result.token) {
+                localStorage.setItem(STAFF_TOKEN_KEY, result.token);
+                localStorage.setItem("staffFloor", floor);
                 myFloor = floor;
                 document.getElementById("displayFloor").innerText = myFloor;
                 document.getElementById("loginOverlay").style.display = "none";
@@ -179,7 +223,7 @@
         tbodyReport.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
         
         try {
-            const res = await fetch(`${BACKEND_URL}/admin/all-bookings`);
+            const res = await fetch(`${BACKEND_URL}/admin/all-bookings`, { headers: getAuthHeaders() });
             const data = await res.json();
             
             if (data.bookings) {
@@ -266,7 +310,7 @@
         if (!confirm(`Are you sure you want to cancel this booking? An email will be sent to the student.`)) return;
         try {
             const res = await fetch(`${BACKEND_URL}/cancel-booking`, { 
-                method: "POST", headers: { "Content-Type": "application/json" }, 
+                method: "POST", headers: getAuthHeaders(), 
                 body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) 
             });
             const result = await res.json();
