@@ -2,7 +2,7 @@ const booking = JSON.parse(localStorage.getItem("bookingData"));
 const detailsDiv = document.getElementById("bookingDetails");
 const cancelBtn = document.getElementById("cancelBtn");
 
-const BACKEND_URL = "https://nima-backend.vercel.app";
+const BACKEND_URL = "https://nima-roombooking-backend.vercel.app";
 
 // ---- show booking details ----
 detailsDiv.innerHTML = `

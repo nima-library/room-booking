@@ -1,4 +1,4 @@
-const NIMA_BACKEND_URL = "https://nima-backend.vercel.app";
+const NIMA_BACKEND_URL = "https://nima-roombooking-backend.vercel.app";
 
 const NIMA_FIREBASE_CONFIG = {
     apiKey: "AIzaSyBM7-ufYhqO5Uo2PpM-4x_R0sRMCVnQqPE",

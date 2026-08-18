@@ -1,8 +1,8 @@
-const BACKEND_URL = "https://nima-backend.vercel.app"; 
+const BACKEND_URL = "https://nima-roombooking-backend.vercel.app";
 
 let selectedSlot = null;
 let selectedRoom = null;
-let currentBookings = []; 
+let currentBookings = [];
 let ROOMS = []; // 🚀 Now starts empty and loads dynamically from Firebase!
 
 // --- 1. INITIAL SETUP ---
@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dateInput = document.getElementById('bookingDate');
     const today = new Date();
     const localTodayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-    
-    dateInput.min = localTodayStr; 
+
+    dateInput.min = localTodayStr;
     dateInput.value = localTodayStr;
 
     // Load slots for today 
@@ -45,7 +45,7 @@ async function loadRoomsFromDatabase() {
             ROOMS = data.rooms;
         } else {
             // Fallback just in case the database is totally empty
-            ROOMS = ["Room 501", "Room 502", "Room 503", "Room 504", "Room 505"]; 
+            ROOMS = ["Room 501", "Room 502", "Room 503", "Room 504", "Room 505"];
         }
     } catch (err) {
         console.error("Failed to load rooms from DB:", err);
@@ -55,7 +55,7 @@ async function loadRoomsFromDatabase() {
 
 // 📅 HOLIDAY & WEEKEND CHECKER
 function isHoliday(dateObj) {
-    const dayOfWeek = dateObj.getDay(); 
+    const dayOfWeek = dateObj.getDay();
     if (dayOfWeek === 6) {
         const date = dateObj.getDate();
         const isSecondSat = date > 7 && date <= 14;
@@ -72,7 +72,7 @@ async function fetchBookedSlots(dateStr) {
 
         if (data.status === "closed") {
             showClosedLibrary(`⛔ LIBRARY CLOSED: ${data.reason}`);
-            return; 
+            return;
         }
 
         const selectedDateObj = new Date(dateStr);
@@ -82,7 +82,7 @@ async function fetchBookedSlots(dateStr) {
         }
 
         currentBookings = data.bookings || [];
-        updateSlotAvailability(dateStr); 
+        updateSlotAvailability(dateStr);
 
     } catch (err) { console.error("Error:", err); }
 }
@@ -99,14 +99,14 @@ function selectSlot(element, time) {
     document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
     element.classList.add('selected');
     selectedSlot = time;
-    selectedRoom = null; 
+    selectedRoom = null;
     showAvailableRooms(time);
 }
 
 // --- 🏨 COMPLEX ROOM RULES ---
 function showAvailableRooms(slotTime) {
     const roomGrid = document.getElementById('roomGrid');
-    roomGrid.innerHTML = ""; 
+    roomGrid.innerHTML = "";
 
     const selectedDateObj = new Date(document.getElementById('bookingDate').value);
     const dayOfWeek = selectedDateObj.getDay();
@@ -138,14 +138,14 @@ function showAvailableRooms(slotTime) {
         btn.className = isBooked ? 'room-btn room-booked' : 'room-btn';
         const roomNum = room.replace("Room ", "");
         const floorNum = roomNum.charAt(0);
-        btn.innerText = `${floorNum}th Floor ${roomNum}`; 
+        btn.innerText = `${floorNum}th Floor ${roomNum}`;
         btn.disabled = isBooked;
 
         if (!isBooked) {
             btn.onclick = () => {
                 document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                selectedRoom = room; 
+                selectedRoom = room;
             };
         }
         roomGrid.appendChild(btn);
@@ -155,8 +155,8 @@ function showAvailableRooms(slotTime) {
 // --- ⏱️ COMPLEX TIMING RULES ---
 function updateSlotAvailability(selectedDateStr) {
     const grid = document.getElementById('slotGrid');
-    grid.innerHTML = ""; 
-    document.getElementById('roomGrid').innerHTML = ""; 
+    grid.innerHTML = "";
+    document.getElementById('roomGrid').innerHTML = "";
 
     const times = [
         "08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM",
@@ -180,7 +180,7 @@ function updateSlotAvailability(selectedDateStr) {
         btn.className = 'slot-btn free';
         btn.innerHTML = timeText;
         btn.onclick = () => selectSlot(btn, timeText);
-        
+
         const startHour = getStartHour(timeText);
 
         if (dayOfWeek === 0 && (startHour < 10 || startHour >= 16)) {
@@ -192,27 +192,27 @@ function updateSlotAvailability(selectedDateStr) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
-        } 
+        }
         else if (selectedDateStr === localTodayStr && startHour <= currentHour) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
-        } 
+        }
         // 🚀 NEW: It now dynamically checks against the length of the LIVE database rooms!
         else if (slotCounts[timeText] >= ROOMS.length) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:red; font-size:10px;">FULL</small>`;
         }
-        
+
         grid.appendChild(btn);
     });
 }
 
 function getStartHour(timeString) {
-    const parts = timeString.split(' - ')[0]; 
-    let hour = parseInt(parts.split(':')[0]); 
-    const ampm = parts.split(' ')[1]; 
+    const parts = timeString.split(' - ')[0];
+    let hour = parseInt(parts.split(':')[0]);
+    const ampm = parts.split(' ')[1];
     if (ampm === "PM" && hour !== 12) hour += 12;
     if (ampm === "AM" && hour === 12) hour = 0;
     return hour;
@@ -221,8 +221,8 @@ function getStartHour(timeString) {
 function updateMemberFields() {
     const size = document.getElementById('groupSize').value;
     const container = document.getElementById('groupMembersContainer');
-    container.innerHTML = ""; 
-    for (let i = 1; i < size; i++) { 
+    container.innerHTML = "";
+    for (let i = 1; i < size; i++) {
         container.innerHTML += `
             <div class="member-input-block">
                 <div class="input-group" style="margin-bottom:10px;">
@@ -239,10 +239,10 @@ function updateMemberFields() {
 
 async function bookRoom() {
     if (!selectedSlot || !selectedRoom) return alert("⚠️ Please select a Time Slot and a Room.");
-    
+
     const leaderName = document.getElementById('leaderName').value;
     const rollNo = document.getElementById('rollNo').value;
-    const email = document.getElementById('email').value; 
+    const email = document.getElementById('email').value;
     const dateStr = document.getElementById('bookingDate').value;
     const purposeSelect = document.getElementById('purpose').value;
     const contactNo = document.getElementById('contactNo').value;
@@ -273,19 +273,19 @@ async function bookRoom() {
         return alert("⚠️ Please fill in the details for all Group Members.");
     }
 
-    const bookingData = { 
-        room_id: selectedRoom, 
-        date: dateStr, 
-        time_slot: selectedSlot, 
-        leader_name: leaderName, 
-        leader_roll_no: rollNo, 
-        email: email, 
+    const bookingData = {
+        room_id: selectedRoom,
+        date: dateStr,
+        time_slot: selectedSlot,
+        leader_name: leaderName,
+        leader_roll_no: rollNo,
+        email: email,
         contact_no: contactNo,
         institute: institute,
         programme: programme,
-        group_size: groupSize, 
-        members: members, 
-        purpose: finalPurpose 
+        group_size: groupSize,
+        members: members,
+        purpose: finalPurpose
     };
 
     const btn = document.getElementById('confirmBtn');
@@ -296,11 +296,11 @@ async function bookRoom() {
     try {
         const res = await fetch(`${BACKEND_URL}/confirm-booking`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookingData) });
         const result = await res.json();
-        
+
         if (result.status === 'success') {
             alert("✅ Booking Confirmed Successfully!\n\nReminder: Please arrive 5 minutes early to your assigned room.");
             localStorage.setItem("bookingData", JSON.stringify(bookingData));
-            window.location.href = "success.html"; 
+            window.location.href = "success.html";
         } else {
             alert("❌ Error: " + result.message);
             btn.innerHTML = originalText;
