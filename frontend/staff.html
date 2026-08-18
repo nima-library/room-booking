@@ -39,6 +39,13 @@
         <i class="fa-solid fa-user-tie" style="font-size: 40px; color: #34495e; margin-bottom: 15px;"></i>
         <h2>Staff Access</h2>
         <p style="margin-top:0; color:#64748b; font-size:13px;">Sign in with an approved Google account.</p>
+        <select id="staffFloorSelect">
+            <option value="" disabled selected>Select Your Floor</option>
+            <option value="5">5th Floor</option>
+            <option value="6">6th Floor</option>
+            <option value="7">7th Floor</option>
+            <option value="8">8th Floor</option>
+        </select>
         <button id="staffLoginBtn" class="main-btn" style="background: #34495e;" onclick="checkStaffLogin()">Continue with Google</button>
     </div>
 </div>
@@ -138,15 +145,16 @@
     async function bootStaff() {
         const session = await NIMAAuth.verifySession("staff");
         if (session && session.role === "staff") {
-            document.getElementById("loginOverlay").style.display = "none";
-            const assignedFloor = (session.floor || localStorage.getItem("staffFloor") || "").trim();
+            const overlay = document.getElementById("loginOverlay");
+            const assignedFloor = (localStorage.getItem("staffFloor") || "").trim();
             if (assignedFloor) {
                 myFloor = assignedFloor;
-                localStorage.setItem("staffFloor", myFloor);
                 document.getElementById("displayFloor").innerText = myFloor;
+                overlay.style.display = "none";
                 loadFloorBookings();
             } else {
                 document.getElementById("displayFloor").innerText = "?";
+                overlay.style.display = "flex";
             }
         }
     }
@@ -156,18 +164,17 @@
     // --- SECURE LOGIN TALKING TO FIREBASE ---
     async function checkStaffLogin() {
         const btn = document.getElementById("staffLoginBtn");
+        const floor = document.getElementById("staffFloorSelect").value;
+        if (!floor) {
+            alert("Please select your floor.");
+            return;
+        }
         btn.innerText = "Checking...";
         
         try {
             const session = await NIMAAuth.loginWithGoogle();
             if (session.role === "staff") {
-                const assignedFloor = (session.floor || "").trim();
-                if (!assignedFloor) {
-                    alert("This staff account does not have a floor assigned.");
-                    NIMAAuth.logoutAndReturnHome();
-                    return;
-                }
-                myFloor = assignedFloor;
+                myFloor = floor;
                 localStorage.setItem("staffFloor", myFloor);
                 document.getElementById("displayFloor").innerText = myFloor;
                 document.getElementById("loginOverlay").style.display = "none";

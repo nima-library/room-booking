@@ -40,7 +40,6 @@ function getAuthHeaders() {
 
 function clearAuthState() {
     Object.values(NIMA_AUTH_KEYS).forEach((key) => localStorage.removeItem(key));
-    localStorage.removeItem("staffFloor");
     try {
         if (typeof firebase !== "undefined" && firebase.apps.length) {
             firebase.auth().signOut();
@@ -85,11 +84,6 @@ async function loginWithGoogle() {
     localStorage.setItem(NIMA_AUTH_KEYS.token, data.token);
     localStorage.setItem(NIMA_AUTH_KEYS.role, data.role);
     localStorage.setItem(NIMA_AUTH_KEYS.email, data.email || email);
-    if (data.floor) {
-        localStorage.setItem("staffFloor", String(data.floor));
-    } else {
-        localStorage.removeItem("staffFloor");
-    }
 
     if (data.role === "student") {
         localStorage.setItem(NIMA_AUTH_KEYS.studentEmail, data.email || email);
@@ -112,9 +106,6 @@ async function verifySession(expectedRole) {
         if (data.status === "success" && data.role) {
             localStorage.setItem(NIMA_AUTH_KEYS.role, data.role);
             if (data.email) localStorage.setItem(NIMA_AUTH_KEYS.email, data.email);
-            if (data.floor) {
-                localStorage.setItem("staffFloor", String(data.floor));
-            }
 
             if (expectedRole && data.role !== expectedRole) {
                 routeByRole(data.role);

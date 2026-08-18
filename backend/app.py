@@ -131,15 +131,14 @@ def resolve_role(email):
 
     staff_doc = db.collection(STAFF_EMAILS_COLLECTION).document(email).get()
     if staff_doc.exists:
-        staff_data = staff_doc.to_dict() or {}
-        return {"role": "staff", "floor": str(staff_data.get("floor", "")).strip()}
+        return {"role": "staff"}
 
     if is_valid_university_email(email):
         return {"role": "student"}
 
     return None
 
-def issue_token(role, email=None, extra_claims=None):
+def issue_token(role, email=None):
     now = datetime.now(timezone.utc)
     payload = {
         "role": role,
@@ -147,8 +146,6 @@ def issue_token(role, email=None, extra_claims=None):
         "iat": now,
         "exp": now + timedelta(hours=JWT_EXPIRES_HOURS),
     }
-    if extra_claims:
-        payload.update(extra_claims)
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 def get_bearer_token():
@@ -289,13 +286,12 @@ def auth_login():
             return jsonify({"status": "error", "message": "Unauthorized email"}), 403
 
         role = role_info.get("role")
-        token = issue_token(role, email, {k: v for k, v in role_info.items() if k != "role"})
+        token = issue_token(role, email)
         return jsonify({
             "status": "success",
             "token": token,
             "role": role,
             "email": email,
-            "floor": role_info.get("floor", ""),
             "name": decoded.get("name") or decoded.get("email", "")
         }), 200
     except Exception as e:
@@ -306,17 +302,8 @@ def auth_login():
 def list_staff_emails():
     try:
         docs = db.collection(STAFF_EMAILS_COLLECTION).stream()
-        staff = []
-        for doc in docs:
-            data = doc.to_dict() or {}
-            email = normalize_email(data.get("email") or doc.id)
-            if email:
-                staff.append({
-                    "email": email,
-                    "floor": str(data.get("floor", "")).strip()
-                })
-        staff.sort(key=lambda item: item["email"])
-        return jsonify({"status": "success", "staff_emails": staff}), 200
+        emails = sorted([normalize_email(doc.to_dict().get("email") or doc.id) for doc in docs if normalize_email(doc.to_dict().get("email") or doc.id)])
+        return jsonify({"status": "success", "staff_emails": emails}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -325,17 +312,13 @@ def list_staff_emails():
 def add_staff_email():
     try:
         email = normalize_email(request.json.get("email"))
-        floor = str(request.json.get("floor", "")).strip()
         if not email or not is_valid_university_email(email):
             return jsonify({"status": "error", "message": "Enter a valid @nirmauni.ac.in email"}), 400
         if email == ADMIN_EMAIL:
             return jsonify({"status": "error", "message": "Admin email cannot be added as staff"}), 400
-        if not floor:
-            return jsonify({"status": "error", "message": "Floor is required"}), 400
 
         db.collection(STAFF_EMAILS_COLLECTION).document(email).set({
             "email": email,
-            "floor": floor,
             "added_at": firestore.SERVER_TIMESTAMP
         }, merge=True)
         return jsonify({"status": "success"}), 200
@@ -467,7 +450,7 @@ def verify_auth():
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return jsonify({"status": "success", "role": payload.get("role"), "email": payload.get("email"), "floor": payload.get("floor", "")}), 200
+        return jsonify({"status": "success", "role": payload.get("role"), "email": payload.get("email")}), 200
     except jwt.ExpiredSignatureError:
         return jsonify({"status": "error", "message": "Session expired"}), 401
     except jwt.InvalidTokenError:
