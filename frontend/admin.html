@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="auth.js"></script>
     <style>
         .admin-header { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; }
         .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
@@ -35,29 +38,9 @@
     <div class="login-box">
         <a href="index.html" class="close-login-btn" title="Back to Home"><i class="fa-solid fa-xmark"></i></a>
         <i class="fa-solid fa-user-shield" style="font-size: 40px; color: #c0392b; margin-bottom: 15px;"></i>
-        <h2>Admin Login</h2>
-        <input type="password" id="adminPass" placeholder="Enter Admin Password">
-        <button id="loginBtn" class="main-btn" onclick="checkLogin()">Access Dashboard</button>
-    </div>
-</div>
-
-<div id="adminPassModal" class="overlay-bg" style="display:none; z-index: 1000;">
-    <div class="login-box">
-        <a onclick="document.getElementById('adminPassModal').style.display='none'" class="close-login-btn"><i class="fa-solid fa-xmark"></i></a>
-        <i class="fa-solid fa-shield-halved" style="font-size: 40px; color: #c0392b; margin-bottom: 15px;"></i>
-        <h2>Change Admin Pass</h2>
-        <input type="password" id="newAdminPass" placeholder="Enter New Admin Password">
-        <button class="main-btn" style="background: #c0392b;" onclick="updateAdminPassword()">Save Password</button>
-    </div>
-</div>
-
-<div id="staffPassModal" class="overlay-bg" style="display:none; z-index: 1000;">
-    <div class="login-box">
-        <a onclick="document.getElementById('staffPassModal').style.display='none'" class="close-login-btn"><i class="fa-solid fa-xmark"></i></a>
-        <i class="fa-solid fa-user-tie" style="font-size: 40px; color: #34495e; margin-bottom: 15px;"></i>
-        <h2>Change Staff Pass</h2>
-        <input type="password" id="newStaffPass" placeholder="Enter New Staff Password">
-        <button class="main-btn" style="background: #34495e;" onclick="updateStaffPassword()">Save Staff Password</button>
+        <h2>Admin Access</h2>
+        <p style="margin-top:0; color:#64748b; font-size:13px;">Sign in with the approved Google account.</p>
+        <button id="loginBtn" class="main-btn" onclick="checkLogin()">Continue with Google</button>
     </div>
 </div>
 
@@ -71,8 +54,8 @@
                     <p style="margin:0; opacity: 0.9;">Manage reservations, rooms & reports</p>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="document.getElementById('adminPassModal').style.display='flex'"><i class="fa-solid fa-shield"></i> Admin Pass</button>
-                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="document.getElementById('staffPassModal').style.display='flex'"><i class="fa-solid fa-user-tie"></i> Staff Pass</button>
+                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="document.getElementById('staffEmailsCard').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-user-plus"></i> Staff Emails</button>
+                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="fetchMasterData(); loadStaffEmails();"><i class="fa-solid fa-rotate"></i> Refresh</button>
                     <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                 </div>
             </div>
@@ -151,6 +134,24 @@
                     <button class="block-btn" id="addRoomBtn" style="background: #27ae60; margin-top:0;" onclick="addRoom()"><i class="fa-solid fa-plus"></i> Add</button>
                     <button class="block-btn" id="delRoomBtn" style="background: #c0392b; margin-top:0;" onclick="deleteRoom()"><i class="fa-solid fa-trash"></i> Delete</button>
                 </div>
+            </div>
+
+            <div class="control-card" id="staffEmailsCard">
+                <h3><i class="fa-solid fa-user-plus" style="color:#2980b9;"></i> Staff Emails</h3>
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">Authorize Google emails for staff access.</p>
+                <input type="email" id="staffEmailInput" placeholder="staff.member@nirmauni.ac.in" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ddd;">
+                <select id="staffFloorInput" style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd;">
+                    <option value="" disabled selected>Select Floor</option>
+                    <option value="5">5th Floor</option>
+                    <option value="6">6th Floor</option>
+                    <option value="7">7th Floor</option>
+                    <option value="8">8th Floor</option>
+                </select>
+                <div style="display: flex; gap: 10px; margin-top:10px;">
+                    <button class="block-btn" style="background: #27ae60; margin-top:0;" onclick="addStaffEmail()"><i class="fa-solid fa-plus"></i> Add Staff</button>
+                    <button class="block-btn" style="background: #34495e; margin-top:0;" onclick="loadStaffEmails()"><i class="fa-solid fa-rotate"></i> Reload</button>
+                </div>
+                <div id="staffEmailList" style="margin-top: 15px; display: grid; gap: 8px;"></div>
             </div>
         </div>
 
@@ -254,8 +255,6 @@
 
 <script>
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
-    const ADMIN_TOKEN_KEY = "nimaAdminToken";
-    
     const ALL_TIMES = ["08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM", "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM", "04:00 PM - 05:00 PM", "05:00 PM - 06:00 PM", "06:00 PM - 07:45 PM"];
     
     let ALL_ROOMS = []; // Loaded from Firebase dynamically!
@@ -263,39 +262,24 @@
     let currentFilteredAdminData = []; 
 
     function getAuthHeaders() {
-        const headers = { "Content-Type": "application/json" };
-        const token = localStorage.getItem(ADMIN_TOKEN_KEY);
-        if (token) headers.Authorization = `Bearer ${token}`;
-        return headers;
-    }
-
-    async function verifyAdminSession() {
-        const token = localStorage.getItem(ADMIN_TOKEN_KEY);
-        if (!token) return false;
-        try {
-            const res = await fetch(`${BACKEND_URL}/auth/verify`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (data.status === "success" && data.role === "admin") {
-                document.getElementById("loginOverlay").style.display = "none";
-                fetchRooms();
-                fetchMasterData();
-                return true;
-            }
-        } catch (err) {
-            console.error("Auth verify failed:", err);
-        }
-        localStorage.removeItem(ADMIN_TOKEN_KEY);
-        return false;
+        return NIMAAuth.getAuthHeaders();
     }
 
     function logoutAdmin() {
-        localStorage.removeItem(ADMIN_TOKEN_KEY);
-        location.reload();
+        NIMAAuth.logoutAndReturnHome();
     }
 
-    document.addEventListener("DOMContentLoaded", verifyAdminSession);
+    async function bootAdmin() {
+        const session = await NIMAAuth.verifySession("admin");
+        if (session && session.role === "admin") {
+            document.getElementById("loginOverlay").style.display = "none";
+            fetchRooms();
+            fetchMasterData();
+            loadStaffEmails();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", bootAdmin);
 
     function getDatesInRange(startDate, endDate) {
         const date = new Date(startDate);
@@ -309,29 +293,28 @@
     }
 
     async function checkLogin() {
-        const pass = document.getElementById("adminPass").value;
         const btn = document.getElementById("loginBtn");
         btn.innerText = "Checking...";
         try {
-            const res = await fetch(`${BACKEND_URL}/admin-login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pass }) });
-            const result = await res.json();
-            if (result.status === "success" && result.token) { 
-                localStorage.setItem(ADMIN_TOKEN_KEY, result.token);
-                document.getElementById("loginOverlay").style.display = "none"; 
-                fetchRooms(); 
-                fetchMasterData(); 
-            } 
-            else { 
-                alert("❌ Wrong Password"); 
-                btn.innerText = "Access Dashboard";
+            const session = await NIMAAuth.loginWithGoogle();
+            if (session.role === "admin") {
+                document.getElementById("loginOverlay").style.display = "none";
+                fetchRooms();
+                fetchMasterData();
+                loadStaffEmails();
+            } else {
+                NIMAAuth.routeByRole(session.role);
             }
-        } catch (err) { alert("Server Error"); btn.innerText = "Access Dashboard"; }
+        } catch (err) { 
+            alert(err.message || "Login failed");
+            btn.innerText = "Continue with Google";
+        }
     }
 
     // --- FIREBASE ROOM FUNCTIONS ---
     async function fetchRooms() {
         try {
-            const res = await fetch(`${BACKEND_URL}/get-rooms`, { headers: getAuthHeaders() });
+            const res = await fetch(`${BACKEND_URL}/get-rooms`, { headers: NIMAAuth.getAuthHeaders() });
             const data = await res.json();
             if (data.status === 'success') {
                 ALL_ROOMS = data.rooms;
@@ -359,7 +342,7 @@
         document.getElementById('addRoomBtn').innerHTML = "Adding...";
         try {
             const res = await fetch(`${BACKEND_URL}/admin/add-room`, { 
-                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_name: newRoom }) 
+                method: "POST", headers: NIMAAuth.getAuthHeaders(), body: JSON.stringify({ room_name: newRoom }) 
             });
             const data = await res.json();
             if(data.status === 'success') {
@@ -379,7 +362,7 @@
         document.getElementById('delRoomBtn').innerHTML = "Deleting...";
         try {
             const res = await fetch(`${BACKEND_URL}/admin/delete-room`, { 
-                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_name: roomToDel }) 
+                method: "POST", headers: NIMAAuth.getAuthHeaders(), body: JSON.stringify({ room_name: roomToDel }) 
             });
             const data = await res.json();
             if(data.status === 'success') {
@@ -391,35 +374,87 @@
         document.getElementById('delRoomBtn').innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
     }
 
-    // --- PASSWORD MANAGEMENT ---
-    async function updateAdminPassword() {
-        const newPass = document.getElementById("newAdminPass").value;
-        if (!newPass) return alert("Please enter a new password.");
+    // --- STAFF EMAIL MANAGEMENT ---
+    async function loadStaffEmails() {
+        const list = document.getElementById("staffEmailList");
+        if (!list) return;
+        list.innerHTML = `<div style="font-size:13px; color:#64748b;">Loading...</div>`;
+
         try {
-            const res = await fetch(`${BACKEND_URL}/admin/change-password`, { 
-                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ new_password: newPass }) 
+            const res = await fetch(`${BACKEND_URL}/admin/staff-emails`, { headers: NIMAAuth.getAuthHeaders() });
+            const data = await res.json();
+            if (data.status !== "success") throw new Error(data.message || "Failed to load staff");
+
+            const emails = data.staff_emails || [];
+            if (emails.length === 0) {
+                list.innerHTML = `<div style="font-size:13px; color:#64748b;">No staff emails saved.</div>`;
+                return;
+            }
+
+            list.innerHTML = "";
+            emails.forEach((email) => {
+                const row = document.createElement("div");
+                row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px; border:1px solid #e2e8f0; border-radius:6px; background:#f8fafc;";
+                const label = document.createElement("span");
+                label.textContent = `${email.email}${email.floor ? ` - Floor ${email.floor}` : ""}`;
+                label.style.fontSize = "13px";
+                const btn = document.createElement("button");
+                btn.className = "delete-btn";
+                btn.style.padding = "4px 10px";
+                btn.textContent = "Remove";
+                btn.onclick = () => removeStaffEmail(email.email);
+                row.appendChild(label);
+                row.appendChild(btn);
+                list.appendChild(row);
             });
-            const result = await res.json();
-            if (result.status === "success") {
-                alert("✅ Admin Password Updated Successfully!");
-                document.getElementById('adminPassModal').style.display = 'none';
-            } else { alert("Error updating password."); }
-        } catch (err) { alert("⚠️ Cannot connect to backend."); }
+        } catch (err) {
+            list.innerHTML = `<div style="font-size:13px; color:#c0392b;">Failed to load staff emails.</div>`;
+        }
     }
 
-    async function updateStaffPassword() {
-        const newPass = document.getElementById("newStaffPass").value;
-        if (!newPass) return alert("Please enter a new staff password.");
+    async function addStaffEmail() {
+        const input = document.getElementById("staffEmailInput");
+        const email = (input.value || "").trim().toLowerCase();
+        if (!email) return alert("Please enter a staff email.");
+
         try {
-            const res = await fetch(`${BACKEND_URL}/admin/change-staff-password`, { 
-                method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ new_password: newPass }) 
+            const floor = document.getElementById("staffFloorInput").value;
+            const res = await fetch(`${BACKEND_URL}/admin/staff-emails`, {
+                method: "POST",
+                headers: NIMAAuth.getAuthHeaders(),
+                body: JSON.stringify({ email, floor })
             });
-            const result = await res.json();
-            if (result.status === "success") {
-                alert("✅ Staff Password Updated Globally!");
-                document.getElementById('staffPassModal').style.display = 'none';
-            } else { alert("Error updating password."); }
-        } catch (err) { alert("⚠️ Cannot connect to backend."); }
+            const data = await res.json();
+            if (data.status === "success") {
+                input.value = "";
+                document.getElementById("staffFloorInput").value = "";
+                loadStaffEmails();
+                alert("Staff email saved.");
+            } else {
+                alert(data.message || "Failed to add staff email.");
+            }
+        } catch (err) {
+            alert("Cannot connect to backend.");
+        }
+    }
+
+    async function removeStaffEmail(email) {
+        if (!confirm(`Remove ${email} from staff access?`)) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/staff-emails`, {
+                method: "DELETE",
+                headers: NIMAAuth.getAuthHeaders(),
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                loadStaffEmails();
+            } else {
+                alert(data.message || "Failed to remove staff email.");
+            }
+        } catch (err) {
+            alert("Cannot connect to backend.");
+        }
     }
 
     // --- DATA & REPORTS ---

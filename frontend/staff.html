@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="auth.js"></script>
     <style>
         .staff-header { background: linear-gradient(135deg, #34495e, #2c3e50); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; }
         .booking-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
@@ -34,18 +37,9 @@
     <div class="login-box">
         <a href="index.html" class="close-login-btn" title="Back to Home"><i class="fa-solid fa-xmark"></i></a>
         <i class="fa-solid fa-user-tie" style="font-size: 40px; color: #34495e; margin-bottom: 15px;"></i>
-        <h2>Staff Login</h2>
-        
-        <select id="staffFloor">
-            <option value="" disabled selected>Select Your Floor</option>
-            <option value="5">5th Floor</option>
-            <option value="6">6th Floor</option>
-            <option value="7">7th Floor</option>
-            <option value="8">8th Floor</option>
-        </select>
-        
-        <input type="password" id="staffPass" placeholder="Enter Staff Password">
-        <button id="staffLoginBtn" class="main-btn" style="background: #34495e;" onclick="checkStaffLogin()">Access Floor</button>
+        <h2>Staff Access</h2>
+        <p style="margin-top:0; color:#64748b; font-size:13px;">Sign in with an approved Google account.</p>
+        <button id="staffLoginBtn" class="main-btn" style="background: #34495e;" onclick="checkStaffLogin()">Continue with Google</button>
     </div>
 </div>
 
@@ -134,83 +128,56 @@
 
 <script>
     const BACKEND_URL = "https://nima-backend.vercel.app"; 
-    const STAFF_TOKEN_KEY = "nimaStaffToken";
     let myFloor = ""; 
     let currentFilteredData = []; 
 
-    function getAuthHeaders() {
-        const headers = { "Content-Type": "application/json" };
-        const token = localStorage.getItem(STAFF_TOKEN_KEY);
-        if (token) headers.Authorization = `Bearer ${token}`;
-        return headers;
-    }
-
-    async function verifyStaffSession() {
-        const token = localStorage.getItem(STAFF_TOKEN_KEY);
-        if (!token) return false;
-        try {
-            const res = await fetch(`${BACKEND_URL}/auth/verify`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (data.status === "success" && data.role === "staff") {
-                document.getElementById("loginOverlay").style.display = "none";
-                const savedFloor = localStorage.getItem("staffFloor");
-                if (savedFloor) {
-                    myFloor = savedFloor;
-                    document.getElementById("displayFloor").innerText = myFloor;
-                    loadFloorBookings();
-                }
-                return true;
-            }
-        } catch (err) {
-            console.error("Auth verify failed:", err);
-        }
-        localStorage.removeItem(STAFF_TOKEN_KEY);
-        localStorage.removeItem("staffFloor");
-        return false;
-    }
-
     function logoutStaff() {
-        localStorage.removeItem(STAFF_TOKEN_KEY);
-        localStorage.removeItem("staffFloor");
-        location.reload();
+        NIMAAuth.logoutAndReturnHome();
     }
 
-    document.addEventListener("DOMContentLoaded", verifyStaffSession);
+    async function bootStaff() {
+        const session = await NIMAAuth.verifySession("staff");
+        if (session && session.role === "staff") {
+            document.getElementById("loginOverlay").style.display = "none";
+            const assignedFloor = (session.floor || localStorage.getItem("staffFloor") || "").trim();
+            if (assignedFloor) {
+                myFloor = assignedFloor;
+                localStorage.setItem("staffFloor", myFloor);
+                document.getElementById("displayFloor").innerText = myFloor;
+                loadFloorBookings();
+            } else {
+                document.getElementById("displayFloor").innerText = "?";
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", bootStaff);
 
     // --- SECURE LOGIN TALKING TO FIREBASE ---
     async function checkStaffLogin() {
-        const pass = document.getElementById("staffPass").value;
-        const floor = document.getElementById("staffFloor").value;
-        
-        if (!floor) return alert("Please select your floor.");
-        
         const btn = document.getElementById("staffLoginBtn");
         btn.innerText = "Checking...";
         
         try {
-            const res = await fetch(`${BACKEND_URL}/staff-login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password: pass })
-            });
-            const result = await res.json();
-            
-            if (result.status === "success" && result.token) {
-                localStorage.setItem(STAFF_TOKEN_KEY, result.token);
-                localStorage.setItem("staffFloor", floor);
-                myFloor = floor;
+            const session = await NIMAAuth.loginWithGoogle();
+            if (session.role === "staff") {
+                const assignedFloor = (session.floor || "").trim();
+                if (!assignedFloor) {
+                    alert("This staff account does not have a floor assigned.");
+                    NIMAAuth.logoutAndReturnHome();
+                    return;
+                }
+                myFloor = assignedFloor;
+                localStorage.setItem("staffFloor", myFloor);
                 document.getElementById("displayFloor").innerText = myFloor;
                 document.getElementById("loginOverlay").style.display = "none";
                 loadFloorBookings();
             } else {
-                alert("❌ Wrong Password");
-                btn.innerText = "Access Floor";
+                NIMAAuth.routeByRole(session.role);
             }
         } catch (err) {
-            alert("Server Error. Ensure your backend is deployed.");
-            btn.innerText = "Access Floor";
+            alert(err.message || "Server Error. Ensure your backend is deployed.");
+            btn.innerText = "Continue with Google";
         }
     }
 
@@ -223,7 +190,7 @@
         tbodyReport.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
         
         try {
-            const res = await fetch(`${BACKEND_URL}/admin/all-bookings`, { headers: getAuthHeaders() });
+            const res = await fetch(`${BACKEND_URL}/admin/all-bookings`, { headers: NIMAAuth.getAuthHeaders() });
             const data = await res.json();
             
             if (data.bookings) {
@@ -310,7 +277,7 @@
         if (!confirm(`Are you sure you want to cancel this booking? An email will be sent to the student.`)) return;
         try {
             const res = await fetch(`${BACKEND_URL}/cancel-booking`, { 
-                method: "POST", headers: getAuthHeaders(), 
+                method: "POST", headers: NIMAAuth.getAuthHeaders(), 
                 body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) 
             });
             const result = await res.json();

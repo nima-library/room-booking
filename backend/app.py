@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from firebase_config import db 
-from firebase_admin import firestore
+from firebase_admin import firestore, auth as firebase_auth
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -21,6 +21,10 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "noreply.roombooking@nirmauni.ac.in"  
 SENDER_PASSWORD = "rgnwarylovvaxijz" 
+
+ADMIN_EMAIL = "noreply.roombooking@nirmauni.ac.in"
+STAFF_EMAILS_COLLECTION = "Authorized_Staff"
+
 def derive_jwt_secret():
     explicit = os.environ.get("JWT_SECRET")
     if explicit:
@@ -108,13 +112,43 @@ def get_system_password(user_type):
     except Exception:
         return f'{user_type}123'
 
-def issue_token(role):
+def normalize_email(email):
+    return (email or "").strip().lower()
+
+def is_valid_university_email(email):
+    return normalize_email(email).endswith("@nirmauni.ac.in")
+
+def is_staff_email(email):
+    email = normalize_email(email)
+    if not email:
+        return False
+    return db.collection(STAFF_EMAILS_COLLECTION).document(email).get().exists
+
+def resolve_role(email):
+    email = normalize_email(email)
+    if email == ADMIN_EMAIL:
+        return {"role": "admin"}
+
+    staff_doc = db.collection(STAFF_EMAILS_COLLECTION).document(email).get()
+    if staff_doc.exists:
+        staff_data = staff_doc.to_dict() or {}
+        return {"role": "staff", "floor": str(staff_data.get("floor", "")).strip()}
+
+    if is_valid_university_email(email):
+        return {"role": "student"}
+
+    return None
+
+def issue_token(role, email=None, extra_claims=None):
     now = datetime.now(timezone.utc)
     payload = {
         "role": role,
+        "email": normalize_email(email),
         "iat": now,
         "exp": now + timedelta(hours=JWT_EXPIRES_HOURS),
     }
+    if extra_claims:
+        payload.update(extra_claims)
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 def get_bearer_token():
@@ -241,6 +275,85 @@ def cancel_via_email():
         return "<h1 style='text-align:center;'>Booking not found or already cancelled.</h1>", 404
     except Exception as e: return f"Error: {str(e)}", 500
 
+@app.route('/auth/login', methods=['POST'])
+def auth_login():
+    try:
+        id_token = request.json.get('id_token')
+        if not id_token:
+            return jsonify({"status": "error", "message": "ID token required"}), 400
+
+        decoded = firebase_auth.verify_id_token(id_token)
+        email = normalize_email(decoded.get("email"))
+        role_info = resolve_role(email)
+        if not role_info:
+            return jsonify({"status": "error", "message": "Unauthorized email"}), 403
+
+        role = role_info.get("role")
+        token = issue_token(role, email, {k: v for k, v in role_info.items() if k != "role"})
+        return jsonify({
+            "status": "success",
+            "token": token,
+            "role": role,
+            "email": email,
+            "floor": role_info.get("floor", ""),
+            "name": decoded.get("name") or decoded.get("email", "")
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 401
+
+@app.route('/admin/staff-emails', methods=['GET'])
+@require_auth(["admin"])
+def list_staff_emails():
+    try:
+        docs = db.collection(STAFF_EMAILS_COLLECTION).stream()
+        staff = []
+        for doc in docs:
+            data = doc.to_dict() or {}
+            email = normalize_email(data.get("email") or doc.id)
+            if email:
+                staff.append({
+                    "email": email,
+                    "floor": str(data.get("floor", "")).strip()
+                })
+        staff.sort(key=lambda item: item["email"])
+        return jsonify({"status": "success", "staff_emails": staff}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/staff-emails', methods=['POST'])
+@require_auth(["admin"])
+def add_staff_email():
+    try:
+        email = normalize_email(request.json.get("email"))
+        floor = str(request.json.get("floor", "")).strip()
+        if not email or not is_valid_university_email(email):
+            return jsonify({"status": "error", "message": "Enter a valid @nirmauni.ac.in email"}), 400
+        if email == ADMIN_EMAIL:
+            return jsonify({"status": "error", "message": "Admin email cannot be added as staff"}), 400
+        if not floor:
+            return jsonify({"status": "error", "message": "Floor is required"}), 400
+
+        db.collection(STAFF_EMAILS_COLLECTION).document(email).set({
+            "email": email,
+            "floor": floor,
+            "added_at": firestore.SERVER_TIMESTAMP
+        }, merge=True)
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/staff-emails', methods=['DELETE'])
+@require_auth(["admin"])
+def delete_staff_email():
+    try:
+        email = normalize_email(request.json.get("email"))
+        if not email:
+            return jsonify({"status": "error", "message": "Email required"}), 400
+        db.collection(STAFF_EMAILS_COLLECTION).document(email).delete()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/admin/block-day', methods=['POST'])
 @require_auth(["admin"])
 def block_day():
@@ -335,7 +448,7 @@ def all_bookings():
 def admin_login():
     req_pass = request.json.get('password')
     if req_pass == get_system_password('admin'): 
-        return jsonify({"status": "success", "token": issue_token("admin"), "role": "admin"}), 200
+        return jsonify({"status": "success", "token": issue_token("admin", ADMIN_EMAIL), "role": "admin"}), 200
     return jsonify({"status": "error", "message": "Invalid password"}), 401
 
 # --- NEW ROUTE ADDED HERE ---
@@ -354,7 +467,7 @@ def verify_auth():
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return jsonify({"status": "success", "role": payload.get("role")}), 200
+        return jsonify({"status": "success", "role": payload.get("role"), "email": payload.get("email"), "floor": payload.get("floor", "")}), 200
     except jwt.ExpiredSignatureError:
         return jsonify({"status": "error", "message": "Session expired"}), 401
     except jwt.InvalidTokenError:

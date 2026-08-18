@@ -51,6 +51,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="auth.js"></script>
 </head>
 <body>
 
@@ -72,9 +73,9 @@
         <h2>Welcome to NIMA Library</h2>
         <p>Please select your portal to continue</p>
 
-        <button class="login-btn btn-student" onclick="studentLogin()">
+        <button class="login-btn btn-student" onclick="handlePortalLogin()">
             <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google">
-            Login with Nirma University credentials
+            Continue with Google
         </button>
         <button class="login-btn btn-staff" onclick="window.location.href='staff.html'">
             <i class="fa-solid fa-user-tie"></i> Library Staff Login
@@ -86,41 +87,25 @@
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBM7-ufYhqO5Uo2PpM-4x_R0sRMCVnQqPE",
-        authDomain: "nimalibrary-cbceb.firebaseapp.com",
-        databaseURL: "https://nimalibrary-cbceb-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "nimalibrary-cbceb",
-        storageBucket: "nimalibrary-cbceb.firebasestorage.app",
-        messagingSenderId: "480609468196",
-        appId: "1:480609468196:web:5281f1507baaa4780b3db1",
-        measurementId: "G-67XY9ZF713"
-    };
-
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+    async function handlePortalLogin() {
+        try {
+            const session = await loginWithGoogle();
+            NIMAAuth.routeByRole(session.role);
+        } catch (err) {
+            alert(err.message || "Login failed");
+        }
     }
 
-    function studentLogin() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().signInWithPopup(provider)
-        .then((result) => {
-            const userEmail = result.user.email;
-            if (userEmail.endsWith("@nirmauni.ac.in")) {
-                localStorage.setItem("studentEmail", userEmail);
-                window.location.href = "booking.html";
-            } else {
-                firebase.auth().signOut();
-                alert("⛔ Access Denied!\nYou must use your official @nirmauni.ac.in email address.");
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const session = await NIMAAuth.verifySession();
+            if (session && session.role) {
+                NIMAAuth.routeByRole(session.role);
             }
-        })
-        .catch((error) => {
-            console.error("Login Failed:", error);
-            if (error.code !== 'auth/popup-closed-by-user') {
-                alert("Login failed. Check console for details.");
-            }
-        });
-    }
+        } catch (err) {
+            console.error("Session check failed:", err);
+        }
+    });
 </script>
 
 </body>
