@@ -13,7 +13,12 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(
+    app,
+    resources={r"/*": {"origins": ["https://nima-roombooking-frontend.vercel.app"]}},
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "DELETE", "OPTIONS"],
+)
 
 # --- CONFIGURATION ---
 # (Note: ADMIN_PASSWORD is removed from here because it is now securely fetched from Firebase!)
