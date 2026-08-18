@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # --- CONFIGURATION ---
 # (Note: ADMIN_PASSWORD is removed from here because it is now securely fetched from Firebase!)
