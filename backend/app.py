@@ -15,7 +15,7 @@ import jwt
 app = Flask(__name__)
 CORS(
     app,
-    resources={r"/*": {"origins": ["https://nima-roombooking-frontend.vercel.app"]}},
+    resources={r"/*": {"origins": ["*"]}},
     allow_headers=["Content-Type", "Authorization"],
     methods=["GET", "POST", "DELETE", "OPTIONS"],
 )
