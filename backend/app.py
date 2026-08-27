@@ -25,7 +25,7 @@ CORS(
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "noreply.roombooking@nirmauni.ac.in"
-SENDER_PASSWORD = "rgnwarylovvaxijz"
+SENDER_PASSWORD = "ogsvvjnrarucvmgh"
 
 ADMIN_EMAIL = "noreply.roombooking@nirmauni.ac.in"
 STAFF_EMAILS_COLLECTION = "Authorized_Staff"
