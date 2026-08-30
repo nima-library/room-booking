@@ -372,28 +372,7 @@ def cancel_booking():
         time_slot = data.get("time_slot")
 
         if room_id == "SYSTEM":
-            block_ref = db.collection("blocked_days").document(date)
-            block_doc = block_ref.get()
-            if block_doc.exists:
-                doc_data = block_doc.to_dict()
-                if doc_data.get("type", "full") == "full" or time_slot == "All Day":
-                    block_ref.delete()
-                elif doc_data.get("type") == "hours":
-                    slots_to_remove = get_slots_in_range(time_slot)
-                    existing_slots = doc_data.get("slots", {})
-                    if isinstance(existing_slots, list):
-                        new_slots = [s for s in existing_slots if s not in slots_to_remove]
-                        if new_slots:
-                            block_ref.update({"slots": new_slots})
-                        else:
-                            block_ref.delete()
-                    elif isinstance(existing_slots, dict):
-                        new_slots = {s: r for s, r in existing_slots.items() if s not in slots_to_remove}
-                        if new_slots:
-                            block_ref.update({"slots": new_slots})
-                        else:
-                            block_ref.delete()
-            return jsonify({"status": "success", "message": "Closure removed"}), 200
+            return jsonify({"status": "error", "message": "Use the admin reopen endpoint for library closures"}), 400
 
         slot_id = f"{room_id}_{date}_{time_slot}"
         slot_ref = db.collection("daily_slots").document(slot_id)
@@ -653,6 +632,103 @@ def block_slots():
         return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/admin/active-closures", methods=["GET"])
+@require_auth(["admin"])
+def active_closures():
+    """Return each currently active library closure for the admin dashboard."""
+    try:
+        closures = []
+        for closure_doc in db.collection("blocked_days").stream():
+            closure_data = closure_doc.to_dict()
+            date = closure_doc.id
+            closure_type = closure_data.get("type", "full")
+
+            if closure_type == "full":
+                closures.append({
+                    "date": date,
+                    "type": "full",
+                    "time_slot": "All Day",
+                    "reason": closure_data.get("reason", "Library Closed"),
+                })
+                continue
+
+            if closure_type == "hours":
+                slots_data = closure_data.get("slots", {})
+                if isinstance(slots_data, list):
+                    slots_map = {slot: closure_data.get("reason", "Library Closed") for slot in slots_data}
+                elif isinstance(slots_data, dict):
+                    slots_map = slots_data
+                else:
+                    slots_map = {}
+
+                for merged_closure in merge_slots(slots_map):
+                    closures.append({
+                        "date": date,
+                        "type": "hours",
+                        "time_slot": merged_closure["time_slot"],
+                        "slots": get_slots_in_range(merged_closure["time_slot"]),
+                        "reason": merged_closure["reason"],
+                    })
+
+        closures.sort(key=lambda closure: (closure["date"], closure["time_slot"]))
+        return jsonify({"status": "success", "closures": closures}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/admin/reopen-closure", methods=["POST"])
+@require_auth(["admin"])
+def reopen_closure():
+    """Remove an active closure without restoring cancelled bookings or sending email."""
+    try:
+        data = request.get_json(silent=True) or {}
+        date = data.get("date")
+        closure_type = data.get("type")
+        if not date or closure_type not in {"full", "hours"}:
+            return jsonify({"status": "error", "message": "Date and closure type are required"}), 400
+
+        block_ref = db.collection("blocked_days").document(date)
+        block_doc = block_ref.get()
+        if not block_doc.exists:
+            return jsonify({"status": "error", "message": "Closure not found"}), 404
+
+        block_data = block_doc.to_dict()
+        if block_data.get("type", "full") != closure_type:
+            return jsonify({"status": "error", "message": "Closure type no longer matches"}), 409
+
+        if closure_type == "full":
+            block_ref.delete()
+            return jsonify({"status": "success", "message": "Full-day closure reopened"}), 200
+
+        slots_to_reopen = data.get("slots")
+        if not isinstance(slots_to_reopen, list) or not slots_to_reopen:
+            return jsonify({"status": "error", "message": "At least one time slot is required"}), 400
+
+        existing_slots_raw = block_data.get("slots", {})
+        if isinstance(existing_slots_raw, list):
+            existing_slots = {slot: block_data.get("reason", "Library Closed") for slot in existing_slots_raw}
+        elif isinstance(existing_slots_raw, dict):
+            existing_slots = existing_slots_raw
+        else:
+            existing_slots = {}
+
+        slots_to_reopen = set(slots_to_reopen)
+        if not any(slot in existing_slots for slot in slots_to_reopen):
+            return jsonify({"status": "error", "message": "Selected time slots are not closed"}), 404
+
+        remaining_slots = {
+            slot: reason for slot, reason in existing_slots.items() if slot not in slots_to_reopen
+        }
+        if remaining_slots:
+            block_ref.update({"slots": remaining_slots})
+        else:
+            block_ref.delete()
+
+        return jsonify({"status": "success", "message": "Selected hours reopened"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/get-bookings", methods=["GET"])

@@ -55,7 +55,7 @@
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="document.getElementById('staffEmailsCard').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-user-plus"></i> Staff Emails</button>
-                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="fetchMasterData(); loadStaffEmails();"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="fetchRooms(); fetchMasterData(); loadStaffEmails();"><i class="fa-solid fa-rotate"></i> Refresh</button>
                     <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                 </div>
             </div>
@@ -145,6 +145,22 @@
                     <button class="block-btn" style="background: #34495e; margin-top:0;" onclick="loadStaffEmails()"><i class="fa-solid fa-rotate"></i> Reload</button>
                 </div>
                 <div id="staffEmailList" style="margin-top: 15px; display: grid; gap: 8px;"></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h3><i class="fa-solid fa-building" style="color:#2980b9;"></i> All Library Rooms</h3>
+            <p style="font-size: 13px; color: #888; margin-top: 5px;">Rooms currently available in the library.</p>
+            <div id="libraryRoomsList" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:15px;">
+                <div style="font-size:13px; color:#64748b;">Loading rooms...</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h3><i class="fa-solid fa-lock-open" style="color:#2980b9;"></i> Active Library Closures</h3>
+            <p style="font-size: 13px; color: #888; margin-top: 5px;">Reopen a full day or only the selected closed hours. Cancelled bookings are not restored.</p>
+            <div id="activeClosuresList" style="margin-top: 15px; display: grid; gap: 10px;">
+                <div style="font-size:13px; color:#64748b;">Loading...</div>
             </div>
         </div>
 
@@ -269,6 +285,7 @@
             fetchRooms();
             fetchMasterData();
             loadStaffEmails();
+            loadActiveClosures();
         }
     }
 
@@ -295,6 +312,7 @@
                 fetchRooms();
                 fetchMasterData();
                 loadStaffEmails();
+                loadActiveClosures();
             } else {
                 NIMAAuth.routeByRole(session.role);
             }
@@ -310,8 +328,9 @@
             const res = await fetch(`${BACKEND_URL}/get-rooms`, { headers: NIMAAuth.getAuthHeaders() });
             const data = await res.json();
             if (data.status === 'success') {
-                ALL_ROOMS = data.rooms;
+                ALL_ROOMS = (data.rooms || []).sort(new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare);
                 populateRoomDropdown();
+                renderLibraryRooms();
             }
         } catch (err) { console.error("Failed to load rooms:", err); }
     }
@@ -324,6 +343,24 @@
             option.value = room;
             option.text = room.replace("Room ", "");
             select.appendChild(option);
+        });
+    }
+
+    function renderLibraryRooms() {
+        const list = document.getElementById("libraryRoomsList");
+        if (!list) return;
+
+        if (ALL_ROOMS.length === 0) {
+            list.innerHTML = '<div style="font-size:13px; color:#64748b;">No rooms have been added yet.</div>';
+            return;
+        }
+
+        list.innerHTML = "";
+        ALL_ROOMS.forEach(room => {
+            const roomCard = document.createElement("div");
+            roomCard.textContent = room;
+            roomCard.style.cssText = "padding:10px 12px; border:1px solid #dbeafe; border-radius:7px; background:#f8fbff; color:#1e3a5f; font-size:14px; font-weight:600; text-align:center;";
+            list.appendChild(roomCard);
         });
     }
 
@@ -458,7 +495,68 @@
                 loadTodayBookings(); 
                 generateReport();    
             }
+            loadActiveClosures();
         } catch (err) { console.error("Error fetching data:", err); }
+    }
+
+    async function loadActiveClosures() {
+        const list = document.getElementById("activeClosuresList");
+        if (!list) return;
+        list.innerHTML = `<div style="font-size:13px; color:#64748b;">Loading...</div>`;
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/active-closures`, { headers: getAuthHeaders() });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to load closures");
+
+            const closures = data.closures || [];
+            if (closures.length === 0) {
+                list.innerHTML = `<div style="font-size:13px; color:#64748b;">There are no active library closures.</div>`;
+                return;
+            }
+
+            list.innerHTML = "";
+            closures.forEach((closure) => {
+                const row = document.createElement("div");
+                row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; border:1px solid #dbeafe; border-radius:8px; background:#f8fbff; flex-wrap:wrap;";
+                const details = document.createElement("div");
+                const label = closure.type === "full" ? "Full day" : "Partial hours";
+                details.innerHTML = `<strong>${closure.date}</strong> · ${label}<br><span style="font-size:13px; color:#475569;">${closure.time_slot} · ${closure.reason || "Library Closed"}</span>`;
+                const button = document.createElement("button");
+                button.className = "delete-btn";
+                button.textContent = "Reopen";
+                button.onclick = () => reopenClosure(closure);
+                row.appendChild(details);
+                row.appendChild(button);
+                list.appendChild(row);
+            });
+        } catch (err) {
+            list.innerHTML = `<div style="font-size:13px; color:#c0392b;">Failed to load active closures.</div>`;
+        }
+    }
+
+    async function reopenClosure(closure) {
+        const period = closure.type === "full" ? "the full day" : closure.time_slot;
+        if (!confirm(`Reopen ${period} on ${closure.date}? Cancelled bookings will not be restored.`)) return;
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/reopen-closure`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    date: closure.date,
+                    type: closure.type,
+                    slots: closure.type === "hours" ? closure.slots : undefined
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to reopen closure");
+            alert("Library availability updated.");
+            loadActiveClosures();
+            fetchMasterData();
+        } catch (err) {
+            alert(err.message || "Failed to reopen closure.");
+        }
     }
 
     function loadTodayBookings() {
@@ -628,7 +726,7 @@
                     <td>${instDisplay}</td>
                     <td>${b.time_slot}</td>
                     <td class="no-print">
-                        <button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">${b.room_id === 'SYSTEM' ? 'Unblock' : 'Cancel'}</button>
+                        ${b.room_id === 'SYSTEM' ? '<span style="font-size:12px; color:#64748b;">Manage above</span>' : `<button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button>`}
                     </td>
                 </tr>`;
             tbody.innerHTML += row;
