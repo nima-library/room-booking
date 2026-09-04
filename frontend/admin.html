@@ -775,17 +775,54 @@
     link.click();
 }
 
+    function getSlotsInRange(rangeStr) {
+        if (!rangeStr || !rangeStr.includes(" - ")) return [];
+        const [rangeStart, rangeEnd] = rangeStr.split(" - ").map(s => s.trim());
+        let startIdx = -1, endIdx = -1;
+        ALL_TIMES.forEach((slot, i) => {
+            const [s, e] = slot.split(" - ").map(x => x.trim());
+            if (s === rangeStart) startIdx = i;
+            if (e === rangeEnd) endIdx = i;
+        });
+        if (startIdx !== -1 && endIdx !== -1 && startIdx <= endIdx) return ALL_TIMES.slice(startIdx, endIdx + 1);
+        return [];
+    }
+
     async function deleteBooking(roomId, date, timeSlot) {
-        let confirmMsg = `Cancel this booking? The student will be notified.`;
+        // System closures live in a separate collection and must go through the
+        // reopen-closure endpoint, not cancel-booking (which rejects room_id "SYSTEM").
         if (roomId === "SYSTEM") {
-            confirmMsg = `Remove this library closure block?`;
+            return reopenSystemClosure(date, timeSlot);
         }
-        if (!confirm(confirmMsg)) return;
+        if (!confirm(`Cancel this booking? The student will be notified.`)) return;
         try {
-            await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
-            alert(roomId === "SYSTEM" ? "Closure removed!" : "Cancelled!");
-            fetchMasterData(); 
-        } catch (err) { alert("Failed."); }
+            const res = await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to cancel booking");
+            alert("Cancelled!");
+            fetchMasterData();
+        } catch (err) { alert(err.message || "Failed."); }
+    }
+
+    async function reopenSystemClosure(date, timeSlot) {
+        const isFull = timeSlot === "All Day";
+        const period = isFull ? "the full day" : timeSlot;
+        if (!confirm(`Reopen ${period} on ${date}? Cancelled bookings will not be restored.`)) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/reopen-closure`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    date: date,
+                    type: isFull ? "full" : "hours",
+                    slots: isFull ? undefined : getSlotsInRange(timeSlot)
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to reopen closure");
+            alert("Library availability updated.");
+            fetchMasterData();
+        } catch (err) { alert(err.message || "Failed to reopen closure."); }
     }
 
     async function blockDay() {
