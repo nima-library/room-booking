@@ -82,6 +82,7 @@ async function fetchBookedSlots(dateStr) {
         }
 
         currentBookings = data.bookings || [];
+        window.currentBlockedSlots = data.blocked_slots || [];
         updateSlotAvailability(dateStr);
 
     } catch (err) { console.error("Error:", err); }
@@ -197,6 +198,11 @@ function updateSlotAvailability(selectedDateStr) {
             btn.className = 'slot-btn booked';
             btn.onclick = null;
             btn.innerHTML = `${timeText}<br><small style="color:#888; font-size:10px;">EXPIRED</small>`;
+        }
+        else if ((window.currentBlockedSlots || []).includes(timeText)) {
+            btn.className = 'slot-btn booked';
+            btn.onclick = null;
+            btn.innerHTML = `${timeText}<br><small style="color:red; font-size:10px;">CLOSED</small>`;
         }
         // 🚀 NEW: It now dynamically checks against the length of the LIVE database rooms!
         else if (slotCounts[timeText] >= ROOMS.length) {

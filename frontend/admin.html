@@ -55,7 +55,7 @@
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="document.getElementById('staffEmailsCard').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-user-plus"></i> Staff Emails</button>
-                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="fetchMasterData(); loadStaffEmails();"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="fetchRooms(); fetchMasterData(); loadStaffEmails();"><i class="fa-solid fa-rotate"></i> Refresh</button>
                     <button class="main-btn" style="width: auto; padding: 8px 15px; font-size: 13px; background: rgba(255,255,255,0.2);" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                 </div>
             </div>
@@ -145,6 +145,22 @@
                     <button class="block-btn" style="background: #34495e; margin-top:0;" onclick="loadStaffEmails()"><i class="fa-solid fa-rotate"></i> Reload</button>
                 </div>
                 <div id="staffEmailList" style="margin-top: 15px; display: grid; gap: 8px;"></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h3><i class="fa-solid fa-building" style="color:#2980b9;"></i> All Library Rooms</h3>
+            <p style="font-size: 13px; color: #888; margin-top: 5px;">Rooms currently available in the library.</p>
+            <div id="libraryRoomsList" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:15px;">
+                <div style="font-size:13px; color:#64748b;">Loading rooms...</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h3><i class="fa-solid fa-lock-open" style="color:#2980b9;"></i> Active Library Closures</h3>
+            <p style="font-size: 13px; color: #888; margin-top: 5px;">Reopen a full day or only the selected closed hours. Cancelled bookings are not restored.</p>
+            <div id="activeClosuresList" style="margin-top: 15px; display: grid; gap: 10px;">
+                <div style="font-size:13px; color:#64748b;">Loading...</div>
             </div>
         </div>
 
@@ -269,6 +285,7 @@
             fetchRooms();
             fetchMasterData();
             loadStaffEmails();
+            loadActiveClosures();
         }
     }
 
@@ -295,6 +312,7 @@
                 fetchRooms();
                 fetchMasterData();
                 loadStaffEmails();
+                loadActiveClosures();
             } else {
                 NIMAAuth.routeByRole(session.role);
             }
@@ -310,8 +328,9 @@
             const res = await fetch(`${BACKEND_URL}/get-rooms`, { headers: NIMAAuth.getAuthHeaders() });
             const data = await res.json();
             if (data.status === 'success') {
-                ALL_ROOMS = data.rooms;
+                ALL_ROOMS = (data.rooms || []).sort(new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare);
                 populateRoomDropdown();
+                renderLibraryRooms();
             }
         } catch (err) { console.error("Failed to load rooms:", err); }
     }
@@ -324,6 +343,24 @@
             option.value = room;
             option.text = room.replace("Room ", "");
             select.appendChild(option);
+        });
+    }
+
+    function renderLibraryRooms() {
+        const list = document.getElementById("libraryRoomsList");
+        if (!list) return;
+
+        if (ALL_ROOMS.length === 0) {
+            list.innerHTML = '<div style="font-size:13px; color:#64748b;">No rooms have been added yet.</div>';
+            return;
+        }
+
+        list.innerHTML = "";
+        ALL_ROOMS.forEach(room => {
+            const roomCard = document.createElement("div");
+            roomCard.textContent = room;
+            roomCard.style.cssText = "padding:10px 12px; border:1px solid #dbeafe; border-radius:7px; background:#f8fbff; color:#1e3a5f; font-size:14px; font-weight:600; text-align:center;";
+            list.appendChild(roomCard);
         });
     }
 
@@ -458,7 +495,68 @@
                 loadTodayBookings(); 
                 generateReport();    
             }
+            loadActiveClosures();
         } catch (err) { console.error("Error fetching data:", err); }
+    }
+
+    async function loadActiveClosures() {
+        const list = document.getElementById("activeClosuresList");
+        if (!list) return;
+        list.innerHTML = `<div style="font-size:13px; color:#64748b;">Loading...</div>`;
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/active-closures`, { headers: getAuthHeaders() });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to load closures");
+
+            const closures = data.closures || [];
+            if (closures.length === 0) {
+                list.innerHTML = `<div style="font-size:13px; color:#64748b;">There are no active library closures.</div>`;
+                return;
+            }
+
+            list.innerHTML = "";
+            closures.forEach((closure) => {
+                const row = document.createElement("div");
+                row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; border:1px solid #dbeafe; border-radius:8px; background:#f8fbff; flex-wrap:wrap;";
+                const details = document.createElement("div");
+                const label = closure.type === "full" ? "Full day" : "Partial hours";
+                details.innerHTML = `<strong>${closure.date}</strong> · ${label}<br><span style="font-size:13px; color:#475569;">${closure.time_slot} · ${closure.reason || "Library Closed"}</span>`;
+                const button = document.createElement("button");
+                button.className = "delete-btn";
+                button.textContent = "Reopen";
+                button.onclick = () => reopenClosure(closure);
+                row.appendChild(details);
+                row.appendChild(button);
+                list.appendChild(row);
+            });
+        } catch (err) {
+            list.innerHTML = `<div style="font-size:13px; color:#c0392b;">Failed to load active closures.</div>`;
+        }
+    }
+
+    async function reopenClosure(closure) {
+        const period = closure.type === "full" ? "the full day" : closure.time_slot;
+        if (!confirm(`Reopen ${period} on ${closure.date}? Cancelled bookings will not be restored.`)) return;
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/reopen-closure`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    date: closure.date,
+                    type: closure.type,
+                    slots: closure.type === "hours" ? closure.slots : undefined
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to reopen closure");
+            alert("Library availability updated.");
+            loadActiveClosures();
+            fetchMasterData();
+        } catch (err) {
+            alert(err.message || "Failed to reopen closure.");
+        }
     }
 
     function loadTodayBookings() {
@@ -479,7 +577,20 @@
 
         tbody.innerHTML = "";
         studentTodays.forEach(b => {
-            let floorCol = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
+            let floorCol = "N/A";
+            let roomDisplay = "N/A";
+            if (b.room_id) {
+                if (b.room_id === "SYSTEM") {
+                    floorCol = "All Floors";
+                    roomDisplay = "All Rooms";
+                } else if (b.room_id.startsWith("Room ")) {
+                    floorCol = b.room_id.replace("Room ", "").charAt(0) + "th Floor";
+                    roomDisplay = b.room_id.replace("Room ", "");
+                } else {
+                    floorCol = "All Floors";
+                    roomDisplay = b.room_id;
+                }
+            }
             let leaderName = b.leader || b.leader_name || "N/A";
             let leaderRoll = b.roll_no || b.leader_roll_no || "N/A";
             let bookedByDisplay = `<strong>${leaderName}</strong><br><span style="font-size:12px; color:#888;">${leaderRoll}</span>`;
@@ -487,11 +598,11 @@
             const row = `
                 <tr>
                     <td><strong>${floorCol}</strong></td>
-                    <td>${b.room_id.replace("Room ", "")}</td>
+                    <td>${roomDisplay}</td>
                     <td>${bookedByDisplay}</td>
                     <td>${b.time_slot}</td>
                     <td class="no-print">
-                        <button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button>
+                        <button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">${b.room_id === 'SYSTEM' ? 'Unblock' : 'Cancel'}</button>
                     </td>
                 </tr>`;
             tbody.innerHTML += row;
@@ -515,12 +626,61 @@
             if (fDateFrom && b.date < fDateFrom) matches = false;
             if (fDateTo && b.date > fDateTo) matches = false;
             if (fFloor !== "All") {
-                const floorNum = b.room_id.replace("Room ", "").charAt(0);
-                if (floorNum !== fFloor) matches = false;
+                if (b.room_id === "SYSTEM") {
+                    // System closures apply to all floors, so they match any floor filter
+                } else {
+                    const floorNum = b.room_id.replace("Room ", "").charAt(0);
+                    if (floorNum !== fFloor) matches = false;
+                }
             }
-            if (fRoom !== "All" && b.room_id !== fRoom) matches = false;
-            if (fInstitute !== "All" && b.institute !== fInstitute) matches = false;
-            if (fTime !== "All" && b.time_slot !== fTime) matches = false;
+            if (fRoom !== "All" && b.room_id !== fRoom) {
+                if (b.room_id === "SYSTEM") {
+                    // System closures apply to all rooms, so they match any room filter
+                } else {
+                    matches = false;
+                }
+            }
+            if (fInstitute !== "All" && b.institute !== fInstitute) {
+                if (b.room_id === "SYSTEM") {
+                    // System closures don't have institute, so they match filter
+                } else {
+                    matches = false;
+                }
+            }
+            if (fTime !== "All" && b.time_slot !== fTime) {
+                if (b.room_id === "SYSTEM") {
+                    // For system closures, check if the slot falls inside the range
+                    const rangeSlots = getDatesInRange ? [] : []; // dummy or let it pass
+                    // Check if filter time slot is within the closure range
+                    if (b.time_slot !== "All Day") {
+                        const slotsInRange = []; // We can resolve slots covered by closure
+                        // Simple check: does the closure range string contain the filter time?
+                        // E.g., if filter is "10:00 AM - 11:00 AM" and closure is "10:00 AM - 12:00 PM",
+                        // we check if it is within range. Since ALL_TIMES is on backend, let's keep it simple:
+                        // if the closure time_slot matches filter or contains the hours.
+                        // Let's do a basic substring or pass it.
+                        // Actually, we can check if filter time is a substring of the range,
+                        // e.g. "10:00 AM" start hour is within the range.
+                        // Let's write a quick client-side check or just do matches = false if not equal.
+                        // Substring check is simple: if range is "10:00 AM - 12:00 PM", it starts at 10 and ends at 12.
+                        // For maximum simplicity, if time_slot is not All Day, we parse its bounds.
+                        const filterStart = fTime.split(" - ")[0];
+                        const closureParts = b.time_slot.split(" - ");
+                        if (closureParts.length === 2) {
+                            const cStart = closureParts[0];
+                            const cEnd = closureParts[1];
+                            // If they match or if fTime is exactly in the range. Let's do a substring check.
+                            // To be absolutely robust, if range contains the filter time start or end:
+                            // We can just keep it simple: matches = false if b.time_slot !== fTime.
+                        }
+                        if (b.time_slot !== fTime && !b.time_slot.includes(fTime.split(" - ")[0])) {
+                            matches = false;
+                        }
+                    }
+                } else {
+                    matches = false;
+                }
+            }
             return matches;
         });
 
@@ -538,7 +698,20 @@
         }
 
         studentBookingsOnly.forEach(b => {
-            let floorCol = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
+            let floorCol = "N/A";
+            let roomDisplay = "N/A";
+            if (b.room_id) {
+                if (b.room_id === "SYSTEM") {
+                    floorCol = "All Floors";
+                    roomDisplay = "All Rooms";
+                } else if (b.room_id.startsWith("Room ")) {
+                    floorCol = b.room_id.replace("Room ", "").charAt(0) + "th Floor";
+                    roomDisplay = b.room_id.replace("Room ", "");
+                } else {
+                    floorCol = "All Floors";
+                    roomDisplay = b.room_id;
+                }
+            }
             let leaderName = b.leader || b.leader_name || "N/A";
             let leaderRoll = b.roll_no || b.leader_roll_no || "N/A";
             let instDisplay = b.institute || "N/A";
@@ -548,12 +721,12 @@
                 <tr>
                     <td>${b.date}</td>
                     <td><strong>${floorCol}</strong></td>
-                    <td>${b.room_id.replace("Room ", "")}</td>
+                    <td>${roomDisplay}</td>
                     <td>${bookedByDisplay}</td>
                     <td>${instDisplay}</td>
                     <td>${b.time_slot}</td>
                     <td class="no-print">
-                        <button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button>
+                        ${b.room_id === 'SYSTEM' ? '<span style="font-size:12px; color:#64748b;">Manage above</span>' : `<button class="delete-btn" style="font-size:12px; padding:4px 8px;" onclick="deleteBooking('${b.room_id}', '${b.date}', '${b.time_slot}')">Cancel</button>`}
                     </td>
                 </tr>`;
             tbody.innerHTML += row;
@@ -567,7 +740,20 @@
     let csvContent = "Date,Time Slot,Floor,Room No,Leader,Roll No,Contact,Email,Institute,Programme,Purpose,Group Members\n";
 
     currentFilteredAdminData.forEach(b => {
-        let floor = b.room_id ? b.room_id.replace("Room ", "").charAt(0) + "th Floor" : "N/A";
+        let floor = "N/A";
+        let roomVal = "N/A";
+        if (b.room_id) {
+            if (b.room_id === "SYSTEM") {
+                floor = "All Floors";
+                roomVal = "All Rooms";
+            } else if (b.room_id.startsWith("Room ")) {
+                floor = b.room_id.replace("Room ", "").charAt(0) + "th Floor";
+                roomVal = b.room_id;
+            } else {
+                floor = "All Floors";
+                roomVal = b.room_id;
+            }
+        }
         
         // Handle members safely
         let memberList = "None";
@@ -578,7 +764,7 @@
         // Clean values to prevent CSV breaking
         const clean = (val) => String(val || "N/A").replace(/,/g, "");
 
-        let row = `${b.date},${b.time_slot},${floor},${b.room_id},${clean(b.leader)},${clean(b.roll_no)},${clean(b.contact_no)},${clean(b.email)},${clean(b.institute)},${clean(b.programme)},${clean(b.purpose)},"${memberList}"`;
+        let row = `${b.date},${b.time_slot},${floor},${roomVal},${clean(b.leader)},${clean(b.roll_no)},${clean(b.contact_no)},${clean(b.email)},${clean(b.institute)},${clean(b.programme)},${clean(b.purpose)},"${memberList}"`;
         csvContent += row + "\n";
     });
 
@@ -589,13 +775,54 @@
     link.click();
 }
 
+    function getSlotsInRange(rangeStr) {
+        if (!rangeStr || !rangeStr.includes(" - ")) return [];
+        const [rangeStart, rangeEnd] = rangeStr.split(" - ").map(s => s.trim());
+        let startIdx = -1, endIdx = -1;
+        ALL_TIMES.forEach((slot, i) => {
+            const [s, e] = slot.split(" - ").map(x => x.trim());
+            if (s === rangeStart) startIdx = i;
+            if (e === rangeEnd) endIdx = i;
+        });
+        if (startIdx !== -1 && endIdx !== -1 && startIdx <= endIdx) return ALL_TIMES.slice(startIdx, endIdx + 1);
+        return [];
+    }
+
     async function deleteBooking(roomId, date, timeSlot) {
+        // System closures live in a separate collection and must go through the
+        // reopen-closure endpoint, not cancel-booking (which rejects room_id "SYSTEM").
+        if (roomId === "SYSTEM") {
+            return reopenSystemClosure(date, timeSlot);
+        }
         if (!confirm(`Cancel this booking? The student will be notified.`)) return;
         try {
-            await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
+            const res = await fetch(`${BACKEND_URL}/cancel-booking`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ room_id: roomId, date: date, time_slot: timeSlot }) });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to cancel booking");
             alert("Cancelled!");
-            fetchMasterData(); 
-        } catch (err) { alert("Failed."); }
+            fetchMasterData();
+        } catch (err) { alert(err.message || "Failed."); }
+    }
+
+    async function reopenSystemClosure(date, timeSlot) {
+        const isFull = timeSlot === "All Day";
+        const period = isFull ? "the full day" : timeSlot;
+        if (!confirm(`Reopen ${period} on ${date}? Cancelled bookings will not be restored.`)) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/reopen-closure`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    date: date,
+                    type: isFull ? "full" : "hours",
+                    slots: isFull ? undefined : getSlotsInRange(timeSlot)
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data.message || "Failed to reopen closure");
+            alert("Library availability updated.");
+            fetchMasterData();
+        } catch (err) { alert(err.message || "Failed to reopen closure."); }
     }
 
     async function blockDay() {
