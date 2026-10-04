@@ -30,12 +30,18 @@ if os.environ.get("FIREBASE_CREDENTIALS"):
     cred = credentials.Certificate(key_dict)
 
 # 2. Check if we are on Render/Laptop (looking for the file)
-elif os.path.exists("serviceAccountKey.json"):
-    cred = credentials.Certificate("serviceAccountKey.json")
-elif os.path.exists("/etc/secrets/serviceAccountKey.json"):
-    cred = credentials.Certificate("/etc/secrets/serviceAccountKey.json")
 else:
-    raise Exception("No Firebase Key found! Check Vercel Env Vars or Local File.")
+    _backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    _possible_paths = [
+        "serviceAccountKey.json",
+        os.path.join(_backend_dir, "serviceAccountKey.json"),
+        "/etc/secrets/serviceAccountKey.json",
+    ]
+    key_file = next((p for p in _possible_paths if os.path.exists(p)), None)
+    if key_file:
+        cred = credentials.Certificate(key_file)
+    else:
+        raise Exception("No Firebase Key found! Check Vercel Env Vars or Local File.")
 
 # Initialize
 if not firebase_admin._apps:

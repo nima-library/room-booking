@@ -21,7 +21,12 @@ def derive_jwt_secret():
     if firebase_credentials:
         return hashlib.sha256(firebase_credentials.encode("utf-8")).hexdigest()
 
-    for path in ("serviceAccountKey.json", "/etc/secrets/serviceAccountKey.json"):
+    backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    for path in (
+        "serviceAccountKey.json",
+        os.path.join(backend_dir, "serviceAccountKey.json"),
+        "/etc/secrets/serviceAccountKey.json",
+    ):
         if os.path.exists(path):
             with open(path, "rb") as handle:
                 return hashlib.sha256(handle.read()).hexdigest()

@@ -567,7 +567,7 @@
         let todays = globalBookings.filter(b => b.date === todayStr);
         let studentTodays = todays.filter(b => {
             let lName = b.leader || b.leader_name || "";
-            return lName !== "ADMIN BLOCK" && lName !== "MAINTENANCE";
+            return lName !== "ADMIN BLOCK" && lName !== "MAINTENANCE" && b.room_id !== "SYSTEM";
         });
 
         if (studentTodays.length === 0) {
@@ -591,9 +591,8 @@
                     roomDisplay = b.room_id;
                 }
             }
-            let leaderName = b.leader || b.leader_name || "N/A";
             let leaderRoll = b.roll_no || b.leader_roll_no || "N/A";
-            let bookedByDisplay = `<strong>${leaderName}</strong><br><span style="font-size:12px; color:#888;">${leaderRoll}</span>`;
+            let bookedByDisplay = `<strong>${leaderRoll}</strong>`;
 
             const row = `
                 <tr>
@@ -629,7 +628,7 @@
                 if (b.room_id === "SYSTEM") {
                     // System closures apply to all floors, so they match any floor filter
                 } else {
-                    const floorNum = b.room_id.replace("Room ", "").charAt(0);
+                    const floorNum = b.room_id ? b.room_id.replace("Room ", "").charAt(0) : "";
                     if (floorNum !== fFloor) matches = false;
                 }
             }
@@ -649,30 +648,7 @@
             }
             if (fTime !== "All" && b.time_slot !== fTime) {
                 if (b.room_id === "SYSTEM") {
-                    // For system closures, check if the slot falls inside the range
-                    const rangeSlots = getDatesInRange ? [] : []; // dummy or let it pass
-                    // Check if filter time slot is within the closure range
-                    if (b.time_slot !== "All Day") {
-                        const slotsInRange = []; // We can resolve slots covered by closure
-                        // Simple check: does the closure range string contain the filter time?
-                        // E.g., if filter is "10:00 AM - 11:00 AM" and closure is "10:00 AM - 12:00 PM",
-                        // we check if it is within range. Since ALL_TIMES is on backend, let's keep it simple:
-                        // if the closure time_slot matches filter or contains the hours.
-                        // Let's do a basic substring or pass it.
-                        // Actually, we can check if filter time is a substring of the range,
-                        // e.g. "10:00 AM" start hour is within the range.
-                        // Let's write a quick client-side check or just do matches = false if not equal.
-                        // Substring check is simple: if range is "10:00 AM - 12:00 PM", it starts at 10 and ends at 12.
-                        // For maximum simplicity, if time_slot is not All Day, we parse its bounds.
-                        const filterStart = fTime.split(" - ")[0];
-                        const closureParts = b.time_slot.split(" - ");
-                        if (closureParts.length === 2) {
-                            const cStart = closureParts[0];
-                            const cEnd = closureParts[1];
-                            // If they match or if fTime is exactly in the range. Let's do a substring check.
-                            // To be absolutely robust, if range contains the filter time start or end:
-                            // We can just keep it simple: matches = false if b.time_slot !== fTime.
-                        }
+                    if (b.time_slot && b.time_slot !== "All Day") {
                         if (b.time_slot !== fTime && !b.time_slot.includes(fTime.split(" - ")[0])) {
                             matches = false;
                         }
@@ -687,7 +663,7 @@
         // 🛑 STRICTLY REMOVE ALL ADMIN BLOCKS FROM THE REPORT 🛑
         let studentBookingsOnly = filtered.filter(b => {
             let leaderName = b.leader || b.leader_name || "";
-            return leaderName !== "ADMIN BLOCK" && leaderName !== "MAINTENANCE";
+            return leaderName !== "ADMIN BLOCK" && leaderName !== "MAINTENANCE" && b.room_id !== "SYSTEM";
         });
 
         currentFilteredAdminData = studentBookingsOnly; 
@@ -712,10 +688,9 @@
                     roomDisplay = b.room_id;
                 }
             }
-            let leaderName = b.leader || b.leader_name || "N/A";
             let leaderRoll = b.roll_no || b.leader_roll_no || "N/A";
             let instDisplay = b.institute || "N/A";
-            let bookedByDisplay = `<strong>${leaderName}</strong><br><span style="font-size:12px; color:#888;">${leaderRoll}</span>`;
+            let bookedByDisplay = `<strong>${leaderRoll}</strong>`;
 
             const row = `
                 <tr>
@@ -737,7 +712,7 @@
   function downloadAdminCSV() {
     if (currentFilteredAdminData.length === 0) return alert("No data available.");
 
-    let csvContent = "Date,Time Slot,Floor,Room No,Leader,Roll No,Contact,Email,Institute,Programme,Purpose,Group Members\n";
+    let csvContent = "Date,Time Slot,Floor,Room No,Roll No,Email,Institute,Programme,Purpose,Group Members\n";
 
     currentFilteredAdminData.forEach(b => {
         let floor = "N/A";
@@ -758,13 +733,14 @@
         // Handle members safely
         let memberList = "None";
         if (b.members && Array.isArray(b.members) && b.members.length > 0) {
-            memberList = b.members.map(m => `${m.name}(${m.roll})`).join("; ");
+            memberList = b.members.map(m => typeof m === 'object' && m !== null ? (m.roll || m.name || '') : String(m)).filter(Boolean).join("; ");
+            if (!memberList) memberList = "None";
         }
 
         // Clean values to prevent CSV breaking
         const clean = (val) => String(val || "N/A").replace(/,/g, "");
 
-        let row = `${b.date},${b.time_slot},${floor},${roomVal},${clean(b.leader)},${clean(b.roll_no)},${clean(b.contact_no)},${clean(b.email)},${clean(b.institute)},${clean(b.programme)},${clean(b.purpose)},"${memberList}"`;
+        let row = `${b.date},${b.time_slot},${floor},${roomVal},${clean(b.roll_no)},${clean(b.email)},${clean(b.institute)},${clean(b.programme)},${clean(b.purpose)},"${memberList}"`;
         csvContent += row + "\n";
     });
 

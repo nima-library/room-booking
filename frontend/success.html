@@ -47,10 +47,6 @@
 
             <div class="receipt-box">
                 <div class="receipt-row">
-                    <span class="receipt-label">Leader:</span>
-                    <span class="receipt-val" id="dispName">...</span>
-                </div>
-                <div class="receipt-row">
                     <span class="receipt-label">Roll No:</span>
                     <span class="receipt-val" id="dispRoll">...</span>
                 </div>
@@ -89,7 +85,6 @@
             const info = JSON.parse(rawData);
 
             // 2. Fill the receipt
-            document.getElementById("dispName").textContent = info.leader_name || "N/A";
             document.getElementById("dispRoll").textContent = info.leader_roll_no || "N/A";
             document.getElementById("dispDate").textContent = info.date || "N/A";
             document.getElementById("dispTime").textContent = info.time_slot || "N/A";

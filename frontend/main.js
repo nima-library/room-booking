@@ -231,10 +231,6 @@ function updateMemberFields() {
     for (let i = 1; i < size; i++) {
         container.innerHTML += `
             <div class="member-input-block">
-                <div class="input-group" style="margin-bottom:10px;">
-                    <i class="fa-solid fa-user input-icon"></i>
-                    <input type="text" placeholder="Member ${i + 1} Name" class="mem-name" required>
-                </div>
                 <div class="input-group">
                     <i class="fa-solid fa-id-badge input-icon"></i>
                     <input type="text" placeholder="Member ${i + 1} Roll No" class="mem-roll" required>
@@ -246,12 +242,10 @@ function updateMemberFields() {
 async function bookRoom() {
     if (!selectedSlot || !selectedRoom) return alert("⚠️ Please select a Time Slot and a Room.");
 
-    const leaderName = document.getElementById('leaderName').value;
     const rollNo = document.getElementById('rollNo').value;
     const email = document.getElementById('email').value;
     const dateStr = document.getElementById('bookingDate').value;
     const purposeSelect = document.getElementById('purpose').value;
-    const contactNo = document.getElementById('contactNo').value;
     const institute = document.getElementById('institute').value;
     const programme = document.getElementById('programme').value;
     const groupSize = document.getElementById('groupSize').value;
@@ -262,17 +256,16 @@ async function bookRoom() {
         if (!finalPurpose) return alert("⚠️ Please specify your 'Other' purpose.");
     }
 
-    if (!leaderName || !rollNo || !email || !finalPurpose || !contactNo || !institute || !programme || !groupSize) {
+    if (!rollNo || !email || !finalPurpose || !institute || !programme || !groupSize) {
         return alert("⚠️ Please fill in all details, including dropdown selections.");
     }
 
     const members = [];
     let missingMemberData = false;
     document.querySelectorAll('.member-input-block').forEach(block => {
-        const mName = block.querySelector('.mem-name').value.trim();
         const mRoll = block.querySelector('.mem-roll').value.trim();
-        if (!mName || !mRoll) missingMemberData = true;
-        members.push({ name: mName, roll: mRoll });
+        if (!mRoll) missingMemberData = true;
+        members.push({ roll: mRoll });
     });
 
     if (missingMemberData) {
@@ -283,10 +276,8 @@ async function bookRoom() {
         room_id: selectedRoom,
         date: dateStr,
         time_slot: selectedSlot,
-        leader_name: leaderName,
         leader_roll_no: rollNo,
         email: email,
-        contact_no: contactNo,
         institute: institute,
         programme: programme,
         group_size: groupSize,

@@ -202,12 +202,12 @@
             
             if (data.bookings) {
                 // Filter specifically for this floor
-                let floorBookings = data.bookings.filter(b => b.room_id.replace("Room ", "").startsWith(myFloor));
+                let floorBookings = data.bookings.filter(b => b.room_id && b.room_id.replace("Room ", "").startsWith(myFloor));
                 
                 // Hide "ADMIN BLOCK" entries
                 floorBookings = floorBookings.filter(b => {
                     let lName = b.leader || b.leader_name || "";
-                    return lName !== "ADMIN BLOCK" && lName !== "MAINTENANCE";
+                    return lName !== "ADMIN BLOCK" && lName !== "MAINTENANCE" && b.room_id !== "SYSTEM";
                 });
 
                 // ============================================
@@ -225,9 +225,8 @@
                 } else {
                     tbodyToday.innerHTML = "";
                     todays.forEach(b => {
-                        let lName = b.leader || b.leader_name || "N/A";
                         let lRoll = b.roll_no || b.leader_roll_no || "N/A";
-                        let bookedByDisplay = `<strong>${lName}</strong><br><span style="font-size:12px; color:#888;">${lRoll}</span>`;
+                        let bookedByDisplay = `<strong>${lRoll}</strong>`;
 
                         tbodyToday.innerHTML += `
                             <tr>
@@ -258,9 +257,8 @@
                 } else {
                     tbodyReport.innerHTML = "";
                     reportBookings.forEach(b => {
-                        let lName = b.leader || b.leader_name || "N/A";
                         let lRoll = b.roll_no || b.leader_roll_no || "N/A";
-                        let bookedByDisplay = `<strong>${lName}</strong><br><span style="font-size:12px; color:#888;">${lRoll}</span>`;
+                        let bookedByDisplay = `<strong>${lRoll}</strong>`;
 
                         tbodyReport.innerHTML += `
                             <tr>
@@ -299,12 +297,11 @@
     function downloadCSV() {
         if (currentFilteredData.length === 0) return alert("No data available to download.");
 
-        let csvContent = "Date,Time Slot,Room,Leader Name,Roll Number\n";
+        let csvContent = "Date,Time Slot,Room,Roll Number\n";
 
         currentFilteredData.forEach(b => {
-            let lName = (b.leader || b.leader_name || "N/A").replace(/,/g, "");
             let lRoll = (b.roll_no || b.leader_roll_no || "N/A").replace(/,/g, "");
-            let row = `${b.date},${b.time_slot},${b.room_id},${lName},${lRoll}`;
+            let row = `${b.date},${b.time_slot},${b.room_id},${lRoll}`;
             csvContent += row + "\n";
         });
 

@@ -23,7 +23,7 @@ def confirm_booking():
             return jsonify({"status": "error", "message": f"Slot is unavailable: {reason}"}), 400
 
         # 🛑 RULE 1: DUPLICATE BOOKING CHECK (Same roll no, same day)
-        if data.get("leader_name") != "ADMIN BLOCK":
+        if data.get("leader_roll_no") and data.get("leader_name") != "ADMIN BLOCK":
             existing_bookings = (
                 db.collection("daily_slots")
                 .where("date", "==", data["date"])
@@ -69,7 +69,7 @@ def confirm_booking():
 
         run_txn(transaction, slot_ref, data, cancel_token)
 
-        if data.get("email") and data["leader_name"] != "ADMIN BLOCK":
+        if data.get("email") and data.get("leader_name") != "ADMIN BLOCK":
             send_confirmation_email(data["email"], data, cancel_token)
 
         return jsonify({"status": "success", "message": "Booking Confirmed!"}), 200
@@ -94,15 +94,17 @@ def cancel_booking():
         if not doc.exists:
             return jsonify({"status": "error", "message": "Booking not found"}), 404
         booking_info = doc.to_dict()
-        user_email = booking_info.get("details", {}).get("email")
-        leader_name = booking_info.get("details", {}).get("leader_name")
+        details = booking_info.get("details", {})
+        user_email = details.get("email")
+        leader_roll = details.get("leader_roll_no", "Student")
+        leader_name = details.get("leader_name", "")
 
         slot_ref.delete()
 
         if user_email and leader_name != "ADMIN BLOCK":
             send_admin_cancellation_email(
                 user_email,
-                leader_name,
+                leader_roll,
                 room_id,
                 date,
                 time_slot,
@@ -123,8 +125,9 @@ def cancel_via_email():
         found = False
         for doc in docs:
             booking_info = doc.to_dict()
-            user_email = booking_info.get("details", {}).get("email")
-            leader_name = booking_info.get("details", {}).get("leader_name")
+            details = booking_info.get("details", {})
+            user_email = details.get("email")
+            leader_roll = details.get("leader_roll_no", "Student")
             room = booking_info.get("room_id")
             date = booking_info.get("date")
             time = booking_info.get("time_slot")
@@ -133,7 +136,7 @@ def cancel_via_email():
             found = True
 
             if user_email:
-                send_admin_cancellation_email(user_email, leader_name, room, date, time)
+                send_admin_cancellation_email(user_email, leader_roll, room, date, time)
 
         if found:
             return (

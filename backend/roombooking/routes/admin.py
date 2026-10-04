@@ -103,6 +103,7 @@ def block_day():
             booking_info = doc.to_dict()
             details = booking_info.get("details", {})
             leader_name = details.get("leader_name", "")
+            leader_roll = details.get("leader_roll_no", "Student")
 
             # Delete the booking from Firestore
             doc.reference.delete()
@@ -113,7 +114,7 @@ def block_day():
                 if user_email:
                     send_admin_cancellation_email(
                         user_email,
-                        leader_name,
+                        leader_roll,
                         booking_info.get("room_id"),
                         date,
                         booking_info.get("time_slot")
@@ -145,6 +146,7 @@ def block_slots():
             if time_slot in slots:
                 details = booking_info.get("details", {})
                 leader_name = details.get("leader_name", "")
+                leader_roll = details.get("leader_roll_no", "Student")
 
                 # Delete the booking
                 doc.reference.delete()
@@ -155,7 +157,7 @@ def block_slots():
                     if user_email:
                         send_admin_cancellation_email(
                             user_email,
-                            leader_name,
+                            leader_roll,
                             booking_info.get("room_id"),
                             date,
                             time_slot
@@ -310,11 +312,9 @@ def all_bookings():
                 "room_id": d.get("room_id"),
                 "date": d.get("date"),
                 "time_slot": d.get("time_slot"),
-                "leader": details.get("leader_name", "Unknown"),
                 "roll_no": details.get("leader_roll_no", "N/A"),
                 "institute": details.get("institute", "N/A"),
                 "email": details.get("email", "N/A"),
-                "contact_no": details.get("contact_no", "N/A"),
                 "programme": details.get("programme", "N/A"),
                 "purpose": details.get("purpose", "N/A"),
                 "members": details.get("members", []),
@@ -338,7 +338,6 @@ def all_bookings():
                 "roll_no": "—",
                 "institute": "N/A",
                 "email": "N/A",
-                "contact_no": "N/A",
                 "programme": "N/A",
                 "purpose": f"Library Closed — {reason}",
                 "members": []
@@ -361,7 +360,6 @@ def all_bookings():
                     "roll_no": "—",
                     "institute": "N/A",
                     "email": "N/A",
-                    "contact_no": "N/A",
                     "programme": "N/A",
                     "purpose": f"Library Closed — {m['reason']}",
                     "members": []
