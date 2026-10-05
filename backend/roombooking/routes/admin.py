@@ -2,7 +2,7 @@ from firebase_admin import firestore
 from flask import Blueprint, jsonify, request
 
 from ..config import ADMIN_EMAIL, STAFF_EMAILS_COLLECTION
-from ..email_service import send_admin_cancellation_email
+from ..email_service import roll_to_email, send_admin_cancellation_email
 from ..firebase_config import db
 from ..security import (
     is_valid_university_email,
@@ -103,22 +103,19 @@ def block_day():
             booking_info = doc.to_dict()
             details = booking_info.get("details", {})
             leader_name = details.get("leader_name", "")
-            leader_roll = details.get("leader_roll_no", "Student")
+            leader_roll = details.get("leader_roll_no")
 
             # Delete the booking from Firestore
             doc.reference.delete()
 
             # Send email only if it is a student booking
             if leader_name != "ADMIN BLOCK" and leader_name != "SYSTEM BLOCK":
-                user_email = details.get("email")
-                if user_email:
-                    send_admin_cancellation_email(
-                        user_email,
-                        leader_roll,
-                        booking_info.get("room_id"),
-                        date,
-                        booking_info.get("time_slot")
-                    )
+                send_admin_cancellation_email(
+                    leader_roll,
+                    booking_info.get("room_id"),
+                    date,
+                    booking_info.get("time_slot")
+                )
 
         # Save the full day block in Firestore
         db.collection("blocked_days").document(date).set(
@@ -146,22 +143,19 @@ def block_slots():
             if time_slot in slots:
                 details = booking_info.get("details", {})
                 leader_name = details.get("leader_name", "")
-                leader_roll = details.get("leader_roll_no", "Student")
+                leader_roll = details.get("leader_roll_no")
 
                 # Delete the booking
                 doc.reference.delete()
 
                 # Send cancellation email for actual student bookings
                 if leader_name != "ADMIN BLOCK" and leader_name != "SYSTEM BLOCK":
-                    user_email = details.get("email")
-                    if user_email:
-                        send_admin_cancellation_email(
-                            user_email,
-                            leader_roll,
-                            booking_info.get("room_id"),
-                            date,
-                            time_slot
-                        )
+                    send_admin_cancellation_email(
+                        leader_roll,
+                        booking_info.get("room_id"),
+                        date,
+                        time_slot
+                    )
 
         # Save the partial hours block in blocked_days (merging if document exists)
         block_ref = db.collection("blocked_days").document(date)
@@ -314,7 +308,7 @@ def all_bookings():
                 "time_slot": d.get("time_slot"),
                 "roll_no": details.get("leader_roll_no", "N/A"),
                 "institute": details.get("institute", "N/A"),
-                "email": details.get("email", "N/A"),
+                "email": roll_to_email(details.get("leader_roll_no")) or "N/A",
                 "programme": details.get("programme", "N/A"),
                 "purpose": details.get("purpose", "N/A"),
                 "members": details.get("members", []),

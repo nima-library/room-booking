@@ -14,6 +14,9 @@ bookings_bp = Blueprint("bookings", __name__)
 def confirm_booking():
     try:
         data = request.json
+        data.pop("email", None)  # never store student emails; derived from roll no
+        if data.get("leader_roll_no"):
+            data["leader_roll_no"] = data["leader_roll_no"].strip().upper()
         date = data.get("date")
         time_slot = data.get("time_slot")
 
@@ -69,8 +72,8 @@ def confirm_booking():
 
         run_txn(transaction, slot_ref, data, cancel_token)
 
-        if data.get("email") and data.get("leader_name") != "ADMIN BLOCK":
-            send_confirmation_email(data["email"], data, cancel_token)
+        if data.get("leader_name") != "ADMIN BLOCK":
+            send_confirmation_email(data, cancel_token)
 
         return jsonify({"status": "success", "message": "Booking Confirmed!"}), 200
     except Exception as e:
@@ -95,15 +98,13 @@ def cancel_booking():
             return jsonify({"status": "error", "message": "Booking not found"}), 404
         booking_info = doc.to_dict()
         details = booking_info.get("details", {})
-        user_email = details.get("email")
-        leader_roll = details.get("leader_roll_no", "Student")
+        leader_roll = details.get("leader_roll_no")
         leader_name = details.get("leader_name", "")
 
         slot_ref.delete()
 
-        if user_email and leader_name != "ADMIN BLOCK":
+        if leader_name != "ADMIN BLOCK":
             send_admin_cancellation_email(
-                user_email,
                 leader_roll,
                 room_id,
                 date,
@@ -126,8 +127,7 @@ def cancel_via_email():
         for doc in docs:
             booking_info = doc.to_dict()
             details = booking_info.get("details", {})
-            user_email = details.get("email")
-            leader_roll = details.get("leader_roll_no", "Student")
+            leader_roll = details.get("leader_roll_no")
             room = booking_info.get("room_id")
             date = booking_info.get("date")
             time = booking_info.get("time_slot")
@@ -135,8 +135,7 @@ def cancel_via_email():
             doc.reference.delete()
             found = True
 
-            if user_email:
-                send_admin_cancellation_email(user_email, leader_roll, room, date, time)
+            send_admin_cancellation_email(leader_roll, room, date, time)
 
         if found:
             return (
@@ -195,13 +194,10 @@ def my_bookings():
         roll_no = request.args.get("roll_no")
         email = request.args.get("email")
 
-        if email:
-            docs = (
-                db.collection("daily_slots")
-                .where("details.email", "==", email)
-                .stream()
-            )
-        elif roll_no:
+        if email and not roll_no:
+            roll_no = email.split("@")[0]
+        if roll_no:
+            roll_no = roll_no.strip().upper()
             docs = (
                 db.collection("daily_slots")
                 .where("details.leader_roll_no", "==", roll_no)

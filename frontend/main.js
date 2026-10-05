@@ -7,12 +7,6 @@ let ROOMS = []; // 🚀 Now starts empty and loads dynamically from Firebase!
 
 // --- 1. INITIAL SETUP ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // Fill email
-    const studentEmail = localStorage.getItem("studentEmail");
-    if (studentEmail) {
-        document.getElementById("email").value = studentEmail;
-    }
-
     // 🚀 NEW: Load rooms from database first!
     await loadRoomsFromDatabase();
 
@@ -243,7 +237,6 @@ async function bookRoom() {
     if (!selectedSlot || !selectedRoom) return alert("⚠️ Please select a Time Slot and a Room.");
 
     const rollNo = document.getElementById('rollNo').value;
-    const email = document.getElementById('email').value;
     const dateStr = document.getElementById('bookingDate').value;
     const purposeSelect = document.getElementById('purpose').value;
     const institute = document.getElementById('institute').value;
@@ -256,7 +249,7 @@ async function bookRoom() {
         if (!finalPurpose) return alert("⚠️ Please specify your 'Other' purpose.");
     }
 
-    if (!rollNo || !email || !finalPurpose || !institute || !programme || !groupSize) {
+    if (!rollNo || !finalPurpose || !institute || !programme || !groupSize) {
         return alert("⚠️ Please fill in all details, including dropdown selections.");
     }
 
@@ -277,7 +270,6 @@ async function bookRoom() {
         date: dateStr,
         time_slot: selectedSlot,
         leader_roll_no: rollNo,
-        email: email,
         institute: institute,
         programme: programme,
         group_size: groupSize,

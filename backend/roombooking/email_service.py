@@ -5,7 +5,15 @@ from email.mime.text import MIMEText
 from .config import SENDER_EMAIL, SENDER_PASSWORD, SMTP_PORT, SMTP_SERVER
 
 
-def send_confirmation_email(to_email, booking_data, token):
+def roll_to_email(roll_no):
+    roll_no = (roll_no or "").strip().lower()
+    return f"{roll_no}@nirmauni.ac.in" if roll_no else None
+
+
+def send_confirmation_email(booking_data, token):
+    to_email = roll_to_email(booking_data.get("leader_roll_no"))
+    if not to_email:
+        return
     try:
         msg = MIMEMultipart()
         msg["From"] = SENDER_EMAIL
@@ -40,7 +48,11 @@ def send_confirmation_email(to_email, booking_data, token):
         print(f"Email Error: {e}")
 
 
-def send_admin_cancellation_email(to_email, name, room, date, time):
+def send_admin_cancellation_email(roll_no, room, date, time):
+    to_email = roll_to_email(roll_no)
+    if not to_email:
+        return
+    name = roll_no
     try:
         msg = MIMEMultipart()
         msg["From"] = SENDER_EMAIL

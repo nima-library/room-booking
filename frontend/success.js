@@ -7,7 +7,6 @@ const BACKEND_URL = "https://nima-roombooking-backend.vercel.app";
 // ---- show booking details ----
 detailsDiv.innerHTML = `
   <p><strong>Roll No:</strong> ${booking.leader_roll_no}</p>
-  <p><strong>Email:</strong> ${booking.email}</p>
   <p><strong>Room:</strong> ${booking.room_id}</p>
   <p><strong>Date:</strong> ${booking.date}</p>
   <p><strong>Time Slot:</strong> ${booking.time_slot}</p>
